@@ -1,0 +1,113 @@
+{
+    "Version": 1,
+    "UUID": "5e2bde1a-00b2-11e8-8916-8c859027cd3b",
+    "Name": "Holochess",
+    "Properties": {
+        "description": "P2P chess game",
+        "language": "en"
+    },
+    "PropertiesSchemaFile": "properties_schema.json",
+    "RequiresVersion": 18,
+    "DHTConfig": {
+        "HashType": "sha2-256"
+    },
+    "Zomes": [
+        {
+            "Name": "Holochess",
+            "Description": "Main Holochess zome",
+            "CodeFile": "holochessZome.js",
+            "Entries": [
+                {
+                    "Name": "handle",
+                    "DataFormat": "string",
+                    "Sharing": "public"
+                },                
+                {
+                    "Name": "move",
+                    "DataFormat": "json",
+                    "SchemaFile": "holochessEntry.json",
+                    "Sharing": "public"
+                },
+                {
+                    "Name": "game",
+                    "DataFormat": "json",
+                    "SchemaFile": "chessgame.json",
+                    "Sharing": "public"
+                },
+                {
+                    "Name": "game_result",
+                    "DataFormat": "json",
+                    "SchemaFile": "chessgame_result.json",
+                    "Sharing": "public"
+                },                
+                {
+                    "Name": "history_link_base",
+                    "DataFormat": "string",
+                    "Sharing": "public"
+                },
+                {
+                    "Name": "history_links",
+                    "DataFormat": "links"
+                }                
+            ],
+            "RibosomeType": "js",
+            "Functions": [
+                {
+                    "Name": "holochessEntryCreate",
+                    "CallingType": "json",
+                    "Exposure": "public"
+                },
+                {
+                    "Name": "holochessEntryRead",
+                    "CallingType": "json",
+                    "Exposure": "public"
+                },
+                {
+                    "Name": "whoAmI",
+                    "CallingType": "string",
+                    "Exposure":"public"
+                },
+                {
+                    "Name": "setHandle",
+                    "CallingType": "string",
+                    "Exposure":"public"
+                },
+                {
+                    "Name": "getHandles",
+                    "CallingType": "json",
+                    "Exposure":"public"
+                },
+                {
+                    "Name": "getHandle",
+                    "CallingType": "string",
+                    "Exposure":"public"
+                },
+                {
+                    "Name": "getMyHandle",
+                    "CallingType": "string",
+                    "Exposure":"public"
+                },
+                {
+                    "Name": "getAgent",
+                    "CallingType": "string",
+                    "Exposure":"public"
+                },
+                {
+                    "Name": "requestGame",
+                    "CallingType": "json",
+                    "Exposure":"public"
+                },
+                {
+                    "Name": "confirmToss",
+                    "CallingType": "string",
+                    "Exposure":"public"
+                },
+                {
+                    "Name": "getGameHistory",
+                    "CallingType": "json",
+                    "Exposure":"public"
+                }                
+            ]
+        }
+    ]
+}
