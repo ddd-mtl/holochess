@@ -10,9 +10,17 @@
 <body>
   <!-- Board view -->
   <div id="myBoard" style="width: 400px"></div>
+  <p><span id="turn-color"></span> turn</p>
   <p>Status: <span id="status"></span></p>
+  <p>Player: <span id="playerid"></span>fdgdfgdfg3245948nxcgfg</p>
   <input type="button" id="startBtn" value="Reset" />
-
+  <input type="button" id="undoBtn" value="Undo" />
+  <input type="button" id="submitBtn" value="Submit" />  
+  <!-- <input type="button" id="startBtn" value="Auto-submit" /> -->
+  <div id="log" style="width: 400px">    
+      <p id="log-title">Game log</p>
+      <table id="logtable"></table>
+  </div>
   <!-- Scripts -->
   <!-- <script src="../node_modules/jquery/dist/jquery.min.js"></script> -->
   <script src="dep/jquery-3.3.1.js"></script>
