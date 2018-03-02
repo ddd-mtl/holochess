@@ -93,7 +93,7 @@
                     "Name": "getAgent",
                     "CallingType": "string",
                     "Exposure":"public"
-                },
+                },                
                 {
                     "Name": "commitChallenge",
                     "CallingType": "json",
@@ -103,22 +103,17 @@
                     "Name": "commitMove",
                     "CallingType": "json",
                     "Exposure": "public"
-                },                
+                },                              
                 {
-                    "Name": "holochessEntryRead",
-                    "CallingType": "json",
-                    "Exposure": "public"
-                },                
-                {
-                    "Name": "requestGame",
+                    "Name": "getMyGames",
                     "CallingType": "json",
                     "Exposure":"public"
                 },
                 {
-                    "Name": "confirmToss",
-                    "CallingType": "string",
+                    "Name": "getMoves",
+                    "CallingType": "json",
                     "Exposure":"public"
-                },
+                },                
                 {
                     "Name": "getGameHistory",
                     "CallingType": "json",

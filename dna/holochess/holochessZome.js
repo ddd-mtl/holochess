@@ -1,8 +1,5 @@
 'use strict';
 
-/* Holochain API */ var _core_remove=remove;remove=function(a,b){return checkForError("remove",_core_remove(a,b))};var _core_makeHash=makeHash;makeHash=function(a,b){return checkForError("makeHash",_core_makeHash(a,b))};var _core_debug=debug;debug=function(a){return checkForError("debug",_core_debug(a))};var _core_call=call;call=function(a,b,c){return checkForError("call",_core_call(a,b,c))};var _core_commit=commit;commit=function(a,b){return checkForError("commit",_core_commit(a,b))};var _core_get=get;get=function(a,b){return checkForError("get",b===undefined?_core_get(a):_core_get(a,b))};var _core_getLinks=getLinks;getLinks=function(a,b,c){return checkForError("getLinks",_core_getLinks(a,b,c))};var _core_send=send;send=function(a,b,c){return checkForError("send",c===undefined?_core_send(a,b):_core_send(a,b,c))};function checkForError(func,rtn){if(typeof rtn==="object"&&rtn.name=="HolochainError"){var errsrc=new getErrorSource(4);var message='HOLOCHAIN ERROR! "'+rtn.message.toString()+'" on '+func+(errsrc.line===undefined?"":" in "+errsrc.functionName+" at line "+errsrc.line+", column "+errsrc.column);throw{name:"HolochainError",function:func,message:message,holochainMessage:rtn.message,source:errsrc,toString:function(){return this.message}}}return rtn}function getErrorSource(depth){try{throw new Error}catch(e){var line=e.stack.split("\n")[depth];var reg=/at (.*) \(.*:(.*):(.*)\)/g.exec(line);if(reg){this.functionName=reg[1];this.line=reg[2];this.column=reg[3]}}}
-/* Anchors API */ function postCallProcess(rtn){return JSON.parse(rtn)}function setAnchor(anchor,value,entryType,preserveOldValueEntry){var parms={anchor:anchor,value:value};if(entryType!==undefined)parms.entryType=entryType;if(preserveOldValueEntry!==undefined)parms.preserveOldValueEntry=preserveOldValueEntry;return postCallProcess(call("anchors","set",parms))}function getAnchor(anchor,index,anchorHash){var parms={anchor:anchor};if(index!==undefined)parms.index=index;if(anchorHash!==undefined)parms.anchorHash=anchorHash;return postCallProcess(call("anchors","get",parms))}function addToListAnchor(anchor,value,entryType,index,preserveOldValueEntry){var parms={anchor:anchor,value:value};if(entryType!==undefined)parms.entryType=entryType;if(index!==undefined)parms.index=index;if(preserveOldValueEntry!==undefined)parms.preserveOldValueEntry=preserveOldValueEntry;return postCallProcess(call("anchors","addToList",parms))}function getFromListAnchor(anchor,index,anchorHash){var parms={anchor:anchor};if(index!==undefined)parms.index=index;if(anchorHash!==undefined)parms.anchorHash=anchorHash;return postCallProcess(call("anchors","getFromList",parms))}function removeFromListAnchor(anchor,value,entryType,index,preserveOldValueEntry,anchorHash,valueHash){var parms={anchor:anchor};if(value!==undefined)parms.value=value;if(entryType!==undefined)parms.entryType=entryType;if(index!==undefined)parms.index=index;if(preserveOldValueEntry!==undefined)parms.preserveOldValueEntry=preserveOldValueEntry;if(anchorHash!==undefined)parms.anchorHash=anchorHash;if(valueHash!==undefined)parms.valueHash=valueHash;return postCallProcess(call("anchors","removeFromList",parms))}function makeAnchorHash(value,entryType){var parms={value:value};if(entryType!==undefined)parms.entryType=entryType;return postCallProcess(call("anchors","makeAnchorHash",parms))}
-
 // ==============================================================================
 // EXPOSED Functions: visible to the UI, can be called via localhost, web browser, or socket
 // ===============================================================================
@@ -43,42 +40,42 @@ function getAppProperty(name)
  */
 function setHandle(handle)
 {
-  // get old handle (if any)
-  var oldHandle = getAnchor(ME + ":handle");
+  // // get old handle (if any)
+  // var oldHandle = getAnchor(ME + ":handle");
 
-  // if there was one, remove old handle from directory by index
-  if (oldHandle != null)
-  {
-    removeFromListAnchor("userDirectory", undefined, undefined, oldHandle);
-  }
-  // set handle
-  setAnchor(ME + ":handle", handle);
+  // // if there was one, remove old handle from directory by index
+  // if (oldHandle != null)
+  // {
+  //   removeFromListAnchor("userDirectory", undefined, undefined, oldHandle);
+  // }
+  // // set handle
+  // setAnchor(ME + ":handle", handle);
 
-  // Add the new handle to the directory
-  addToListAnchor("userDirectory", ME, undefined, handle);
+  // // Add the new handle to the directory
+  // addToListAnchor("userDirectory", ME, undefined, handle);
 
-  return makeAnchorHash(handle);
+  // return makeAnchorHash(handle);
 }
 
 
 // returns all the handles in the directory
 function getHandles()
 {
-  var rtn = getFromListAnchor("userDirectory");
-  handles = [];
-  for(var x = 0; x < rtn.length; x++)
-  {
-    handles.push({ handle: rtn[x].index, hash: rtn[x].value });
-  }
-  handles.sort(function (a, b)
-  {
-      if (a.handle < b.handle)
-        return -1;
-      if (a.handle > b.handle)
-         return 1;
-      return 0;
-  });
-  return handles;
+  // var rtn = getFromListAnchor("userDirectory");
+  // handles = [];
+  // for(var x = 0; x < rtn.length; x++)
+  // {
+  //   handles.push({ handle: rtn[x].index, hash: rtn[x].value });
+  // }
+  // handles.sort(function (a, b)
+  // {
+  //     if (a.handle < b.handle)
+  //       return -1;
+  //     if (a.handle > b.handle)
+  //        return 1;
+  //     return 0;
+  // });
+  // return handles;
 }
 
 // returns the current handle of this node
@@ -90,13 +87,13 @@ function getMyHandle()
 // returns the handle of an agent
 function getHandle(userHash)
 {
-  return getAnchor(userHash + ":handle");
+  //return getAnchor(userHash + ":handle");
 }
 
 // gets the AgentID (userAddress) based on handle
 function getAgent(handle)
 {
-   return getFromListAnchor("userDirectory", handle);
+   //return getFromListAnchor("userDirectory", handle);
 }
 
 
@@ -134,10 +131,8 @@ function commitMove(gameHashkey, san)
 
   debug("new move on game: "+ gameHashkey + "\n\t san: " + san + "  (" + moveHashkey + ")");
 
-
   // On the DHT, put a link on the challenge's hashkey to the new move.
   commit("move_links", {Links:[{Base:gameHashkey,Link:moveHashkey,Tag:"move"}]});
-
   return moveHashkey;
 }
 
@@ -165,7 +160,7 @@ function getMoves(gameHashkey)
 
 
 // return list of hash of games that corresponds to query
-//function getGamesBy(stateMask, challenger, opponent)
+//// function getGamesBy(stateMask, challenger, opponent)
 function getMyGames()
 {
   debug("getGames of game: " + gameHashkey + "\n\t moves found: " + moves.length);
@@ -292,6 +287,12 @@ function validateCommit(entryName, entry, header, pkg, sources)
       return validateChallenge(entry, header, pkg, sources);
     case 'move':
       return validateMove(entry, header, pkg, sources);      
+    case 'handle':
+    case 'game_result':
+    case 'challenge_links':
+    case 'handle_links':
+    case 'directory_links':
+      return true;
     default:
       // invalid entry name
       return false
@@ -306,6 +307,12 @@ function validatePut(entryName, entry, header, pkg, sources)
       return validateChallenge(entry, header, pkg, sources);
     case 'move':
       return validateMove(entry, header, pkg, sources); 
+      case 'handle':
+      case 'game_result':
+      case 'challenge_links':
+      case 'handle_links':
+      case 'directory_links':
+        return true;      
     default:
       // invalid entry name
       return false
@@ -319,6 +326,11 @@ function validateMod(entryName, entry, header, replaces, pkg, sources)
   {
     case 'challenge':
     case 'move':
+    case 'handle':
+    case 'game_result':
+    case 'challenge_links':
+    case 'handle_links':
+    case 'directory_links':  
       return false;
     default:
       // invalid entry name
@@ -333,6 +345,11 @@ function validateDel(entryName,hash, pkg, sources)
   {
     case 'challenge':
     case 'move':
+    case 'handle':
+    case 'game_result':
+    case 'challenge_links':
+    case 'handle_links':
+    case 'directory_links':
       return false;
     default:
       // invalid entry name

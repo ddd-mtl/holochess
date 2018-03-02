@@ -160,16 +160,6 @@
         boardEl.find('.square-' + target).addClass('highlight-' + highlightColor);
         //console.log(boardEl.find('.square-' + source));
 
-        // Update UI
-        if(turnColor == 'w')
-        {
-            moveCount++;
-            logEl.append("<tr class=\"ch-move-" + moveCount + "\"><td>"+moveCount+"</td><td>" + moveOrder.from +'-' + moveOrder.to + "</td></tr>");
-        }
-        else
-        {
-            logEl.find(".ch-move-" + moveCount).append("<td>" + moveOrder.from +'-' + moveOrder.to + "</td>");
-        }
         updateStatus();
     };
 
@@ -370,6 +360,18 @@
         lastSubmittedFen = game.fen();
         $('#submitBtn').prop("disabled", true);
         $('#undoBtn').prop("disabled", true); 
+
+        // Update UI
+        if(game.turn() == 'b') // if current turn is black, that means white has played
+        {
+            moveCount++;
+            logEl.append("<tr class=\"ch-move-" + moveCount + "\"><td>" + moveCount + "</td><td>" + lastSubmittedMove.from +'-' + lastSubmittedMove.to + "</td></tr>");
+        }
+        else
+        {
+            logEl.find(".ch-move-" + moveCount).append("<td>" + lastSubmittedMove.from +'-' + lastSubmittedMove.to + "</td>");
+        }        
+
     });   
 
 })() // end anonymous wrapper
