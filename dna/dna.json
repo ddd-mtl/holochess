@@ -1,6 +1,6 @@
 {
     "Version": 1,
-    "UUID": "5e2bde1a-00b2-11e8-8916-8c859027cd3b",
+    "UUID": "bc2d7425-1068-46b6-8a44-13ed4d413302",
     "Name": "Holochess",
     "Properties": {
         "description": "P2P chess game",
@@ -25,21 +25,33 @@
                 {
                     "Name": "move",
                     "DataFormat": "json",
-                    "SchemaFile": "holochessEntry.json",
+                    "SchemaFile": "move.json",
                     "Sharing": "public"
                 },
                 {
-                    "Name": "game",
+                    "Name": "challenge",
                     "DataFormat": "json",
-                    "SchemaFile": "chessgame.json",
+                    "SchemaFile": "challenge.json",
                     "Sharing": "public"
                 },
                 {
                     "Name": "game_result",
                     "DataFormat": "json",
-                    "SchemaFile": "chessgame_result.json",
+                    "SchemaFile": "game_result.json",
                     "Sharing": "public"
-                },                
+                },
+                {
+                    "Name": "challenge_links",
+                    "DataFormat": "links"
+                },
+                {
+                    "Name": "handle_links",
+                    "DataFormat": "links"
+                },
+                {
+                    "Name": "directory_links",
+                    "DataFormat": "links"
+                },                                
                 {
                     "Name": "history_link_base",
                     "DataFormat": "string",
@@ -53,17 +65,7 @@
             "RibosomeType": "js",
             "Functions": [
                 {
-                    "Name": "holochessEntryCreate",
-                    "CallingType": "json",
-                    "Exposure": "public"
-                },
-                {
-                    "Name": "holochessEntryRead",
-                    "CallingType": "json",
-                    "Exposure": "public"
-                },
-                {
-                    "Name": "whoAmI",
+                    "Name": "getMyHash",
                     "CallingType": "string",
                     "Exposure":"public"
                 },
@@ -92,6 +94,21 @@
                     "CallingType": "string",
                     "Exposure":"public"
                 },
+                {
+                    "Name": "commitChallenge",
+                    "CallingType": "json",
+                    "Exposure": "public"
+                },
+                {
+                    "Name": "commitMove",
+                    "CallingType": "json",
+                    "Exposure": "public"
+                },                
+                {
+                    "Name": "holochessEntryRead",
+                    "CallingType": "json",
+                    "Exposure": "public"
+                },                
                 {
                     "Name": "requestGame",
                     "CallingType": "json",

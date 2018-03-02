@@ -1,0 +1,13 @@
+{
+  "title": "Move Schema",
+  "type": "object",
+  "properties": {
+    "gameHash": {
+        "type": "string"
+    },
+    "san": {
+      "type": "string"
+    }    
+  },
+  "required": ["gameHash","san"]
+}

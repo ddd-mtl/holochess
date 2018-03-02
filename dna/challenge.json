@@ -1,0 +1,19 @@
+{
+  "title": "Challenge Schema",
+  "type": "object",
+  "properties": {
+		"challenger": {
+			"type": "string"
+    },
+		"opponent": {
+			"type": "string"
+		},        
+    "challengerPlaysWhite": {
+        "type": "boolean"
+    },
+    "isGamePublic": {
+      "type": "boolean"
+    }    
+  },
+  "required": ["challenger", "opponent"]
+}
