@@ -4,15 +4,16 @@
 // EXPOSED Functions: visible to the UI, can be called via localhost, web browser, or socket
 // ===============================================================================
 
-const APP_ID = App.DNA.Hash;
-const ME     = App.Key.Hash;
+// global const
+var APP_ID = App.DNA.Hash;
+var ME     = App.Key.Hash;
 
-const GAME_STATE_NULL               = 1 << 0;
-const GAME_STATE_CHALLENGE_PENDING  = 1 << 1;
-const GAME_STATE_ACTIVE             = 1 << 2;
-const GAME_STATE_FINISHED_WHITE_WIN = 1 << 3;
-const GAME_STATE_FINISHED_BLACK_WIN = 1 << 4;
-const GAME_STATE_FINISHED_DRAW      = 1 << 5;
+var GAME_STATE_NULL               = 1 << 0;
+var GAME_STATE_CHALLENGE_PENDING  = 1 << 1;
+var GAME_STATE_ACTIVE             = 1 << 2;
+var GAME_STATE_FINISHED_WHITE_WIN = 1 << 3;
+var GAME_STATE_FINISHED_BLACK_WIN = 1 << 4;
+var GAME_STATE_FINISHED_DRAW      = 1 << 5;
 
 //
 function getMyHash()
@@ -104,7 +105,7 @@ function getAgent(handle)
 function commitChallenge(opponent, challengerPlaysWhite, isGamePublic)
 {
   // Build and commit challenge entry to my source chain
-  const challenge =
+  var challenge =
   {
     challenger          : ME,
     opponent            : opponent,
@@ -112,7 +113,7 @@ function commitChallenge(opponent, challengerPlaysWhite, isGamePublic)
     isGamePublic        : isGamePublic
   };
   
-  const challengeHashkey = commit('challenge', challenge);
+  var challengeHashkey = commit('challenge', challenge);
 
   debug("new challenge: "+ challengeHashkey + "\n\t challenger: " + ME + "\n\t opponent:" + opponent);
 
@@ -126,8 +127,8 @@ function commitChallenge(opponent, challengerPlaysWhite, isGamePublic)
 function commitMove(gameHashkey, san)
 {
   // Build and commit move entry to my source chain  
-  const move = { gameHash: gameHashkey, san: san };
-  const moveHashkey = commit('move', entry);
+  var move = { gameHash: gameHashkey, san: san };
+  var moveHashkey = commit('move', entry);
 
   debug("new move on game: "+ gameHashkey + "\n\t san: " + san + "  (" + moveHashkey + ")");
 
@@ -149,9 +150,9 @@ function getMoves(gameHashkey)
 
   // Convert to SAN string array
   var sanMoves = [];  
-  for(let i = 0; i < moves.length; i++)
+  for(var i = 0; i < moves.length; i++)
   {
-    const move = moves[i];
+    var move = moves[i];
     sanMoves.push(move.san);
     debug("\t " + i + ". " + move.san);
   }
