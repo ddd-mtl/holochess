@@ -17,8 +17,8 @@ Asynchronous chess games with no time limit
 Send a challenge request to an opponent. Fields:
  - Challenger: Hash of challenger (can only be self)
  - Opponent: Hash of opponent
- - ChallengePlaysWhite: Boolean - self-explanatory
- - iGamePublic: Boolean - if true, challenge and moves are published in the dht, otherwise each entries are local to players sources chains only.
+ - ChallengerPlaysWhite: Boolean - self-explanatory
+ - isGamePublic: Boolean - if true, challenge and moves are published in the dht, otherwise each entries are local to players sources chains only.
 
  2. Opponent accepts challenge and plays first move (empty if opponent does not play white)
 
