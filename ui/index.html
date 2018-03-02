@@ -3,27 +3,62 @@
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">  
+
   <title>Chessboard Tests</title>
+
+  <link rel="stylesheet" type="text/css" href="dep/bootstrap-3.3.7-dist/css/bootstrap.min.css">  
   <link rel="stylesheet" type="text/css" href="dep/chessboardjs/src/chessboard.css" />
   <link rel="stylesheet" type="text/css" href="holochess.css" />
 </head>
 <body>
 
-  <!-- Board view -->
-  <div id="myBoard" style="width: 400px"></div>
-  <p><span id="turn-color"></span> turn</p>
-  <p>Status: <span id="status"></span></p>
-  <p>Player: <span id="playerid"></span>fdgdfgdfg3245948nxcgfg</p>
-  <input type="button" id="startBtn" value="Reset" />
-  <input type="button" id="undoBtn" value="Undo" />
-  <input type="button" id="submitBtn" value="Submit" />  
-  <!-- <input type="button" id="startBtn" value="Auto-submit" /> -->
+<!-- One Row Bootstrap Grid -->
+<div class="container">
+  <div class="row">
+    <div class="col-md-4">
+      <div class="panel panel-default">
+        <!-- Board view -->
+        <div id="myBoard" style="width: 400px"></div>
+        <p><span id="turn-color"></span> turn</p>
+        <p>Status: <span id="status"></span></p>
+        <p>Player: <span id="playerid"></span></p>
+        <input type="button" id="startBtn" value="Reset" />
+        <input type="button" id="undoBtn" value="Undo" />
+        <input type="button" id="submitBtn" value="Submit" />  
+        <!-- <input type="button" id="startBtn" value="Auto-submit" /> -->
 
-  <!-- Log -->
-  <div id="log" style="width: 400px">    
-      <p id="log-title">Game log</p>
-      <table id="logtable"></table>
+        <!-- Log -->
+        <div id="log" style="width: 400px">    
+            <p id="log-title">Game log</p>
+            <table id="logtable"></table>
+        </div>
+      </div>
+      <div class="col-md-4 players">
+          <div class="panel panel-default">
+            <div class="panel-heading">Players</div>
+            <div class="panel-body">
+              <ul id="players">
+              </ul>
+            </div>
+          </div>
+          <div class="row" id="challenge-button-row">
+            <button id="challenge-button" type="button" class="btn btn-primary">Challenge Player!</button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div id="games-header" class="panel-heading">Games History</div>
+            <div class="panel-body">
+              <ul id="games">
+              </ul>
+            </div>
+          </div>
+        </div>      
+    </div>    
   </div>
+</div>  
+ 
 
   <!-- Scripts -->
   <!-- <script src="../node_modules/jquery/dist/jquery.min.js"></script> -->
@@ -31,5 +66,6 @@
   <script type="application/javascript" src="dep/chessboardjs/src/chessboard.js"></script>
   <script type="application/javascript" src="dep/chess.js/chess.js"></script>
   <script type="application/javascript" src="holochess.js"></script>
+  <script type="application/javascript" src="holochess-com.js"></script>
 </body>
 </html>

@@ -167,7 +167,7 @@ function getMyGames()
   debug("getGames of game: " + gameHashkey + "\n\t moves found: " + moves.length);
 
   // getLinks from DHT
-  var challengeLinks = getUnloadedLinks(ME);
+  var challengeLinks = getNonloadedLinks(ME);
   debug("\t count: " + challengeLinks.length);
   
   return challengeLinks;
@@ -211,7 +211,7 @@ function getLoadedLinks(base, tag)
 }
 
 // helper function to call getLinks, handle the no links entry error, and build a simpler links array.
-function getUnloadedLinks(base,tag) 
+function getNonloadedLinks(base,tag) 
 {
   // get the tag from the base in the DHT
   var links = getLinks(base, tag,{Load:false});
