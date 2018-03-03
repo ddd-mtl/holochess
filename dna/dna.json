@@ -75,7 +75,7 @@
                     "Exposure":"public"
                 },
                 {
-                    "Name": "getHandles",
+                    "Name": "getAllHandles",
                     "CallingType": "json",
                     "Exposure":"public"
                 },

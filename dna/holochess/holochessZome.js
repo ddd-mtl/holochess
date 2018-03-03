@@ -11,6 +11,8 @@ var GAME_STATE_FINISHED_WHITE_WIN = 1 << 3;
 var GAME_STATE_FINISHED_BLACK_WIN = 1 << 4;
 var GAME_STATE_FINISHED_DRAW      = 1 << 5;
 
+var SOURCE_AS_HASH = true;
+
 // ==============================================================================
 // EXPOSED Functions: visible to the UI, can be called via localhost, web browser, or socket
 // ===============================================================================
@@ -95,13 +97,23 @@ function commitNewHandle(handle)
 
 
 // returns array of user keys to handles
-function getHandles() 
+function getAllHandles() 
 {
   // if (property("enableDirectoryAccess") != "true") 
   // {
   //     return undefined;
   // }
-  return getLoadedLinks(APP_ID, "handle");
+
+  return getLoadedLinks(APP_ID, "handle", SOURCE_AS_HASH);
+
+  // var linkArray = getLoadedLinks(APP_ID, "handle");
+  // var handleArray = {};
+  // for (var i = 0; i < linkArray.length; i++) 
+  // {
+  //     var handle = {Hash:linkArray[i].Source, Entry: linkArray[i].Entry};
+  //     handleArray.push(handle);
+  // }
+  // return handleArray;
 }
 
 // returns the current handle of this node
@@ -148,6 +160,7 @@ function commitChallenge(opponent, challengerPlaysWhite, isGamePublic)
   return challengeHashkey;
 }
 
+
 // Create a Challenge Entry
 function commitMove(gameHashkey, san)
 {
@@ -189,10 +202,9 @@ function getMoves(gameHashkey)
 //// function getGamesBy(stateMask, challenger, opponent)
 function getMyGames()
 {
-  debug("getGames of game: " + gameHashkey + "\n\t moves found: " + moves.length);
-
+  debug("getMyGames:");
   // getLinks from DHT
-  var challengeLinks = getNonloadedLinks(ME);
+  var challengeLinks = getNonloadedLinks(ME, "challengeInitiated");
   debug("\t count: " + challengeLinks.length);
   
   return challengeLinks;
@@ -222,7 +234,7 @@ function hasErrorOccurred(result)
  * Handle the no-link error case. 
  * Copy the returned entry values into a nicer array
  */
-function getLoadedLinks(base, tag) 
+function getLoadedLinks(base, tag, canSourceBeHash) 
 {
   // Get the tag from the base in the DHT
   var links = getLinks(base, tag, {Load:true});
@@ -239,7 +251,7 @@ function getLoadedLinks(base, tag)
   for (var i = 0;i < links.length; i++) 
   {
       var link     = links[i];
-      var miniLink = {Hash:link.Hash, Entry: link.Entry};
+      var miniLink = (typeof canSourceBeHash !== 'undefined'? {Hash:link.Source, Entry: link.Entry} : {Hash:link.Hash, Entry: link.Entry});
       miniLinkArray.push(miniLink);
   }
   return miniLinkArray;
@@ -309,7 +321,12 @@ function validateChallenge(entry, header, pkg, sources)
     debug("Challenge not valid because challenger and opponent are same.");
     return false;
   }
-  return validate('challenge', entry, header, pkg, sources);
+
+  // FIXME check challenger is valid Agent Hash
+  // FIXME check opponent is valid Agent Hash
+  ////return validate('challenge', entry, header, pkg, sources);
+  
+  return true;
 }
 
 
@@ -322,7 +339,8 @@ function validateMove(entry, header, pkg, sources)
   // FIXME check game exists
   // FIXME check SAN string
   // FIXME check chess move
-  return validate('move', entry, header, pkg, sources);
+  ////return validate('move', entry, header, pkg, sources);
+  return true;
 }
 
 
