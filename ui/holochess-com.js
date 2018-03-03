@@ -3,10 +3,10 @@
 // Use of this source code is governed by GPLv3 found in the LICENSE file
 //---------------------------------------------------------------------------------------
 
-var Me             = null;
-var g_handle       = null;
-var g_handles      = {};
-var g_users        = {};
+var g_myHash         = null;
+var g_myHandle       = null;
+var g_allHandles     = {};
+var g_users          = {};
 var g_activeOpponent = null;
 
 // Holochain UI library
@@ -48,34 +48,37 @@ function getHandle(who, callbackFn)
 
 function getMyHandle() 
 {
-  getHandle(Me, function (handle)
-  {
-      Handle = handle;
-      $("#handle").html(handle);
-  });
+  getHandle(g_myHash, 
+            function(handle)
+            {
+                g_myHandle = handle;
+                $("#handle").html(handle);
+            });
 }
 
 function getProfile() 
 {
-  hc_send("getMyHash", undefined, function(me)
-  {
-      Me = me;
-      getMyHandle();
-      $("#playerid").html(me);
-  });
+  hc_send("getMyHash",
+          undefined, 
+          function(me)
+          {
+              g_myHash = me;
+              getMyHandle();
+              $("#playerid").html(me);
+          });
 }
 
 function getHandles(callbackFn)
 {
   hc_send("getHandles", 
           undefined, 
-          function (json)
+          function(json)
           {
-              g_handles = JSON.parse(json);
+              g_allHandles = JSON.parse(json);
               updateOpponentList();
               if (callbackFn != undefined)
               {
-                  callbackFn(g_handles);
+                  callbackFn(g_allHandles);
               }
           });
 }
@@ -84,9 +87,9 @@ function getHandles(callbackFn)
 function updateOpponentList() 
 {
   $("#players").empty();
-  for (var x = 0; x < g_handles.length; x++) 
+  for (var x = 0; x < g_allHandles.length; x++) 
   {
-      $("#players").append(makePlayerHtml(g_handles[x]));
+      $("#players").append(makePlayerLi(g_allHandles[x]));
   }
   if (g_activeOpponent) 
   {
@@ -94,9 +97,14 @@ function updateOpponentList()
   }
 }
 
-function makePlayerHtml(handle_object) 
+function makePlayerLi(handle_object) 
 {
-  console.log(handle_object);
+  console.log(handle_object);  
+  // console.log(g_myHash);  
+  // if(handle_object.AgentHash == g_myHash) // FIXME must get agent hash with that handle :(
+  // {
+  //   return;
+  // }
   return  "<li data-id=\"" + handle_object.Hash + "\""
         + "data-name=\"" + handle_object.Entry + "\">"
         + handle_object.Entry
