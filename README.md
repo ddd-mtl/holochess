@@ -4,11 +4,12 @@ WIP
 
 ## Intent
 
-P2P chess game on Holochain as a learning project
+Learning Holochain webapp development by making a P2P chess game on Holochain 
 
 ## Features
 
 Asynchronous chess games with no time limit
+FIXME
 
 ### Order of events
 
@@ -56,7 +57,7 @@ Move: Chess move
 ## Links
 
 handle_links:
-
+  - Links handle to agent, tag: "handle"
 challenge_links: 
   - Links challenge to challenger, tag: "challengeInitiated"
   - Links challenge to opponent, tag: "challengeReceived"
@@ -65,5 +66,9 @@ move_links:
  - Links move to challenge, tag: "move"
 
 directory_links: 
-  - Links agent to directory, tag: ""
+  - Links handle to App ("directory" anchor), tag: "handle"
 
+## Anchors
+FIXME
+User directory:
+  - agent hashs linked to app hash

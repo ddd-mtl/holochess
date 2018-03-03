@@ -1,8 +1,13 @@
+// Copyright (C) 2018, Damien Douté
+// Based on The MetaCurrency Project (Eric Harris-Braun & Arthur Brock)
+// Use of this source code is governed by GPLv3 found in the LICENSE file
+//---------------------------------------------------------------------------------------
+
 var Me             = null;
-var g_Handle       = null;
-var g_Handles      = {};
-var g_Users        = {};
-var g_ActivePlayer = null;
+var g_handle       = null;
+var g_handles      = {};
+var g_users        = {};
+var g_activeOpponent = null;
 
 // Holochain UI library
 
@@ -60,19 +65,58 @@ function getProfile()
   });
 }
 
+function getHandles(callbackFn)
+{
+  hc_send("getHandles", 
+          undefined, 
+          function (json)
+          {
+              g_handles = JSON.parse(json);
+              updateOpponentList();
+              if (callbackFn != undefined)
+              {
+                  callbackFn(g_handles);
+              }
+          });
+}
+
+
+function updateOpponentList() 
+{
+  $("#players").empty();
+  for (var x = 0; x < g_handles.length; x++) 
+  {
+      $("#players").append(makePlayerHtml(g_handles[x]));
+  }
+  if (g_activeOpponent) 
+  {
+      setActiveOpponent();
+  }
+}
+
+function makePlayerHtml(handle_object) 
+{
+  console.log(handle_object);
+  return  "<li data-id=\"" + handle_object.Hash + "\""
+        + "data-name=\"" + handle_object.Entry + "\">"
+        + handle_object.Entry
+        + "</li>";
+}
+
 //============================================================================
 
 
-function selectPlayer(event) 
+function selectOpponent(event) 
 {
   $("#players li").removeClass("selected-player");
-  ActivePlayer = $(this).data('id');
-  setActivePlayer();
+  g_activeOpponent = $(this).data('id');
+  setActiveOpponent();
 }
 
-function setActivePlayer()
+
+function setActiveOpponent()
 {
-  var elem = $("#players li[data-id=" + g_ActivePlayer + "]");
+  var elem = $("#players li[data-id=" + g_activeOpponent + "]");
   $(elem).addClass("selected-player");
   $("#games-header").text("Games with " + $(elem).data("name"));
   // loadHistory();
@@ -81,13 +125,13 @@ function setActivePlayer()
 // 
 function commitChallenge() 
 {
-  if (!g_ActivePlayer) 
+  if (!g_activeOpponent) 
   {
       alert("pick a player first!");
       return;
   }
   hc_send("commitChallenge", 
-          JSON.stringify({ "opponent": g_ActivePlayer, "challengerPlaysWhite": true, "isGamePublic": true }),  // FIXME
+          JSON.stringify({ "opponent": g_activeOpponent, "challengerPlaysWhite": true, "isGamePublic": true }),  // FIXME
           function(result)
           {
               result = JSON.parse(result);
@@ -103,8 +147,8 @@ $(window).ready(function ()
 {
   // $("#handle").on("click", "", openSetHandle);
   // $('#setHandleButton').click(doSetHandle);
-  $("#players").on("click", "li", selectPlayer);
+  $("#players").on("click", "li", selectOpponent);
   $("#challenge-button").click(commitChallenge);
   getProfile();
-  // setInterval(getHandles, 2000);
+  setInterval(getHandles, 2000);
 });

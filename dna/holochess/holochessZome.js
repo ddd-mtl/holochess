@@ -1,9 +1,5 @@
 'use strict';
 
-// ==============================================================================
-// EXPOSED Functions: visible to the UI, can be called via localhost, web browser, or socket
-// ===============================================================================
-
 // global const
 var APP_ID = App.DNA.Hash;
 var ME     = App.Key.Hash;
@@ -15,11 +11,16 @@ var GAME_STATE_FINISHED_WHITE_WIN = 1 << 3;
 var GAME_STATE_FINISHED_BLACK_WIN = 1 << 4;
 var GAME_STATE_FINISHED_DRAW      = 1 << 5;
 
+// ==============================================================================
+// EXPOSED Functions: visible to the UI, can be called via localhost, web browser, or socket
+// ===============================================================================
+
 //
 function getMyHash()
 {
     return ME;
 }
+
 
 // The definition of the function you intend to expose
 function getAppProperty(name)
@@ -28,55 +29,79 @@ function getAppProperty(name)
   if (name == "App_Agent_String") { return App.Agent.String; }
   if (name == "App_Key_Hash")     { return App.Key.Hash; }
   if (name == "App_DNA_Hash")     { return App.DNA.Hash; }
-  return "Error: No App Property with name: " + name;
+  return ("Error: No App Property with name: " + name);
 }
 
 
 // HANDLES / AGENT
 // ==============================================================================
 
-/**
- *  set the handle of this node
- *  TODO check handle validity (alphanum?)
- */
-function setHandle(handle)
+// commit first time handle and its links on the directory
+function commitFirstHandle(handle) 
 {
-  // // get old handle (if any)
-  // var oldHandle = getAnchor(ME + ":handle");
+  // TODO confirm no collision
+   // On my source chain, commit a new handle entry
+  var key = commit("handle", handle);
 
-  // // if there was one, remove old handle from directory by index
-  // if (oldHandle != null)
-  // {
-  //   removeFromListAnchor("userDirectory", undefined, undefined, oldHandle);
-  // }
-  // // set handle
-  // setAnchor(ME + ":handle", handle);
+  debug(handle + " is " + key);
 
-  // // Add the new handle to the directory
-  // addToListAnchor("userDirectory", ME, undefined, handle);
+  // On DHT, set links to my handle
+  commit("handle_links", {Links:[{Base:ME,Link:key,Tag:"handle"}]});
+  commit("directory_links", {Links:[{Base:APP_ID,Link:key,Tag:"handle"}]});
 
-  // return makeAnchorHash(handle);
+  return key;
+}
+
+/**
+ * Set new handle for self. 
+ * Might replace previous handle if there is one.
+ * FIXME handle: must be valid handle (alphanum?), and different from current
+ * return new handle hashkey
+ */
+function commitNewHandle(handle)
+{
+  // get all agent's previous handles
+  var handles = getNonloadedLinks(ME, "handle");
+
+  var n = handles.length - 1;
+  if (n < 0)
+  {
+    // No previous handle found
+    return commitFirstHandle(handle);    
+  }
+
+  // Agent has previous handles.
+  // Update previous handle
+  var previousHandleHashkey = handles[n];
+  var newHandleHashkey      = update("handle", handle, previousHandleHashkey);
+
+  debug("new handle: " + handle + " is " + newHandleHashkey);
+  debug("old handle: was " + previousHandleHashkey);
+
+  // Update links to previous handle
+  commit("handle_links",
+          {Links:[
+              {Base:ME, Link:previousHandleHashkey, Tag:"handle", LinkAction:HC.LinkAction.Del},
+              {Base:ME, Link:newHandleHashkey, Tag:"handle"}
+          ]});
+  commit("directory_links",
+          {Links:[
+              {Base:APP_ID, Link:previousHandleHashkey, Tag:"handle", LinkAction:HC.LinkAction.Del},
+              {Base:APP_ID, Link:newHandleHashkey, Tag:"handle"}
+          ]});
+
+  return newHandleHashkey;  
 }
 
 
-// returns all the handles in the directory
-function getHandles()
+// returns array of user keys to handles
+function getHandles() 
 {
-  // var rtn = getFromListAnchor("userDirectory");
-  // handles = [];
-  // for(var x = 0; x < rtn.length; x++)
+  // if (property("enableDirectoryAccess") != "true") 
   // {
-  //   handles.push({ handle: rtn[x].index, hash: rtn[x].value });
+  //     return undefined;
   // }
-  // handles.sort(function (a, b)
-  // {
-  //     if (a.handle < b.handle)
-  //       return -1;
-  //     if (a.handle > b.handle)
-  //        return 1;
-  //     return 0;
-  // });
-  // return handles;
+  return getLoadedLinks(APP_ID, "handle");
 }
 
 // returns the current handle of this node
@@ -184,51 +209,70 @@ function orderNodeIds(challenger, opponent)
   return (challenger < opponent ? challenger + "|" + opponent : opponent + "|" + challenger);
 }
 
+
 // helper function to determine if value returned from holochain function is an error
-function isErr(result) 
+function hasErrorOccurred(result) 
 {
   return ((typeof result === 'object') && result.name == "HolochainError");
 }
 
 
-// helper function to do getLinks call, handle the no-link error case, and copy the returned entry values into a nicer array
+/**
+ * Helper for the "getLinks" with Load call. 
+ * Handle the no-link error case. 
+ * Copy the returned entry values into a nicer array
+ */
 function getLoadedLinks(base, tag) 
 {
-  // get the tag from the base in the DHT
-  var links = getLinks(base, tag,{Load:true});
-  if (isErr(links)) {
-      links = [];
-  } else {
-      links = links;
+  // Get the tag from the base in the DHT
+  var links = getLinks(base, tag, {Load:true});
+
+  // Handle error
+  if (hasErrorOccurred(links)) 
+  {
+    debug("getLoadedLinks failed: " + base + " | tag : " + tag);    
+    return [];
   }
-  var links_filled = [];
-  for (var i=0;i <links.length;i++) {
-      var link = {H:links[i].Hash};
-      link[tag] = links[i].Entry;
-      links_filled.push(link);
+
+  // Build smaller array with just Hash and Entry value
+  var miniLinkArray = [];
+  for (var i = 0;i < links.length; i++) 
+  {
+      var link     = links[i];
+      var miniLink = {Hash:link.Hash, Entry: link.Entry};
+      miniLinkArray.push(miniLink);
   }
-  return links_filled;
+  return miniLinkArray;
 }
 
-// helper function to call getLinks, handle the no links entry error, and build a simpler links array.
-function getNonloadedLinks(base,tag) 
+
+/**
+ * Helper for the "getLinks" without Load call. 
+ * Handle the no links entry error
+ * Build a simpler links array
+ */
+function getNonloadedLinks(base, tag) 
 {
-  // get the tag from the base in the DHT
-  var links = getLinks(base, tag,{Load:false});
-  if (isErr(links)) {
-      links = [];
-  }
-   else {
-      links = links;
-  }
-  debug("Links:"+JSON.stringify(links));
-  var links_filled = [];
-  for (var i=0;i <links.length;i++)
+  // Get the tag from the base in the DHT
+  var links = getLinks(base, tag, {Load:false});
+  // Handle error
+  if (hasErrorOccurred(links)) 
   {
-      links_filled.push(links[i].Hash);
+    debug("getNonloadedLinks failed: " + base + " | tag : " + tag);    
+    return [];
   }
-  return links_filled;
+
+  // debug("Links:" + JSON.stringify(links));
+
+  // Build nicer array
+  var linkHashArray = [];
+  for (var i = 0; i < links.length; i++)
+  {
+      linkHashArray.push(links[i].Hash);
+  }
+  return linkHashArray;
 }
+
 
 // ==============================================================================
 // CALLBACKS: Called by back-end system, instead of front-end app or UI
@@ -243,13 +287,15 @@ function getNonloadedLinks(base,tag)
  */
 function genesis()
 {
-  setHandle(App.Agent.String);
+  commitFirstHandle(App.Agent.String); // FIXME
   return true;
 }
 
+
 // -----------------------------------------------------------------
-//  validation functions for every DHT entry change
+//  VALIDATION functions for every DHT entry change
 // -----------------------------------------------------------------
+
 
 /**
  * Validate Challenge Entry
@@ -279,10 +325,20 @@ function validateMove(entry, header, pkg, sources)
   return validate('move', entry, header, pkg, sources);
 }
 
-// Dispatcher
-function validateCommit(entryName, entry, header, pkg, sources)
+
+function validateLink(linkEntryType, baseHash, links, pkg, sources)
 {
-  switch (entryName)
+  debug("validate link: " + linkEntryType);
+  // FIXME
+  return true; 
+}
+
+
+// Dispatcher
+function validateCommit(entryType, entry, header, pkg, sources)
+{
+  debug("validate commit: " + entryType);
+  switch (entryType)
   {
     case 'challenge':
       return validateChallenge(entry, header, pkg, sources);
@@ -300,9 +356,10 @@ function validateCommit(entryName, entry, header, pkg, sources)
   }
 }
 
-function validatePut(entryName, entry, header, pkg, sources)
+function validatePut(entryType, entry, header, pkg, sources)
 {
-  switch (entryName)
+  debug("validate put: " + entryType);  
+  switch (entryType)
   {
     case 'challenge':
       return validateChallenge(entry, header, pkg, sources);
@@ -310,9 +367,6 @@ function validatePut(entryName, entry, header, pkg, sources)
       return validateMove(entry, header, pkg, sources); 
       case 'handle':
       case 'game_result':
-      case 'challenge_links':
-      case 'handle_links':
-      case 'directory_links':
         return true;      
     default:
       // invalid entry name
@@ -321,18 +375,18 @@ function validatePut(entryName, entry, header, pkg, sources)
 }
 
 // TODO: Add 'challenge accepted' flag
-function validateMod(entryName, entry, header, replaces, pkg, sources)
+function validateMod(entryType, entry, header, replaces, pkg, sources)
 {
-  switch (entryName)
+  debug("validate mod: " + entryType+" header:"+JSON.stringify(header)+" replaces:"+JSON.stringify(replaces));
+
+  switch (entryType)
   {
     case 'challenge':
     case 'move':
-    case 'handle':
     case 'game_result':
-    case 'challenge_links':
-    case 'handle_links':
-    case 'directory_links':  
-      return false;
+      return false;    
+    case 'handle':      
+      return true;
     default:
       // invalid entry name
       return false;
@@ -342,22 +396,24 @@ function validateMod(entryName, entry, header, replaces, pkg, sources)
 // TODO: Possibility to remove challenge if it has not been accepted
 function validateDel(entryName,hash, pkg, sources)
 {
+  debug("validate del: "+entry_type);  
   switch (entryName)
   {
     case 'challenge':
     case 'move':
     case 'handle':
     case 'game_result':
-    case 'challenge_links':
-    case 'handle_links':
-    case 'directory_links':
-      return false;
+      return false;    
     default:
       // invalid entry name
       return false;
   }
 }
 
+
+// ==============================================================================
+// VALIDATION PACKAGE
+// ===============================================================================
 
 function validatePutPkg(entry_type) {return null}
 function validateModPkg(entry_type) { return null}
