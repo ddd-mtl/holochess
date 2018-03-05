@@ -3,13 +3,21 @@
 // Use of this source code is governed by GPLv3 found in the LICENSE file
 //---------------------------------------------------------------------------------------
 
+//===============================================================================
+// GLOBALS
+// ==============================================================================
+
+// var g_users          = {};
 var g_myHash         = null;
 var g_myHandle       = null;
-var g_allHandles     = {};
-var g_users          = {};
-var g_activeOpponent = null;
+var g_allHandles     = {};   // All known handles on the holochain DHT
+var g_activeOpponent = null; // agent hashkey selected in #players list
+var g_activeGame     = null; // game hashkey selected in #my-games list
+var g_loadedGame     = null; // game hashkey loaded on chessboard
 
-// Holochain UI library
+//===============================================================================
+// HOLOCHAIN HELPERS
+// ==============================================================================
 
 // use send to make an ajax call to your exposed functions
 function hc_send(fn, data, resultFn) 
@@ -25,13 +33,15 @@ function hc_send(fn, data, resultFn)
       }
   ).fail(function(response)
    {
-      console.log("\tresponse failed: " + response.responseText);
+      console.log("\tresponse to \"" + fn + "\" failed: " + response.responseText);
   })
   ;
 };
 
-//============================================================================
 
+//===============================================================================
+// HANDLES / AGENT
+// ==============================================================================
 
 function getHandle(who, callbackFn)
 {
@@ -46,6 +56,7 @@ function getHandle(who, callbackFn)
           });
 }
 
+//
 function getMyHandle() 
 {
   getHandle(g_myHash, 
@@ -84,6 +95,10 @@ function getAllHandles(callbackFn)
 }
 
 
+//===============================================================================
+// OPPONENTS
+// ==============================================================================
+
 function updateOpponentList() 
 {
   $("#players").empty();
@@ -111,9 +126,8 @@ function makePlayerLi(handle_object)
         + "</li>";
 }
 
-//============================================================================
 
-
+//
 function selectOpponent(event) 
 {
   $("#players li").removeClass("selected-player");
@@ -122,6 +136,7 @@ function selectOpponent(event)
 }
 
 
+//
 function setActiveOpponent()
 {
   var elem = $("#players li[data-id=" + g_activeOpponent + "]");
@@ -129,6 +144,10 @@ function setActiveOpponent()
   //$("#games-header").text("Games with " + $(elem).data("name"));
   //loadHistory();
 }
+
+//===============================================================================
+// GAMES
+// ==============================================================================
 
 // 
 function commitChallenge() 
@@ -148,19 +167,91 @@ function commitChallenge()
         );  
 }
 
+
+function makeGameLi(gameHashkey) 
+{
+  // console.log("handle_object: " + handle_object.Hash);  
+  // console.log("g_myHash     : " + g_myHash);  
+
+  return  "<li data-id=\"" + gameHashkey + "\""
+        + "data-name=\"" + gameHashkey + "\">"
+        + gameHashkey
+        + "</li>";
+}
+
+
 function getMyGames() 
 {
+    $("#my-games").empty();
   hc_send("getMyGames", 
           undefined, 
           function(json) 
           {
             gameArray = JSON.parse(json);
-            $("#my-games").html("");
+            // $("#my-games").html("");
             for (var x = 0; x < gameArray.length; x++)
             {
-                $("#my-games").append("<li>" + gameArray[x] + "</li>");
+                $("#my-games").append(makeGameLi(gameArray[x]));
             }
           });
+}
+
+
+//
+function selectGame(event) 
+{
+  $("#my-games li").removeClass("selected-player");
+  g_activeGame = $(this).data('id');
+  setActiveGame();
+}
+
+
+//
+function setActiveGame()
+{
+  var elem = $("#my-games li[data-id=" + g_activeGame + "]");
+  $(elem).addClass("selected-player");
+  //$("#games-header").text("Games with " + $(elem).data("name"));
+  //loadHistory();
+}
+
+
+//
+function loadGame(gameHashkey, callbackFn) 
+{
+    console.log("loadGame called: " + gameHashkey);
+    // FIXME: check in canLoadGame state
+    hc_send("getMoves",
+            gameHashkey, 
+            function(result)
+            {
+                sanArray = JSON.parse(result);
+                console.log("loadGame call returned: " + gameHashkey + "\t " + sanArray.length + " moves.");
+                g_loadedGame = gameHashkey;
+                // Return sanArray to caller
+                if (callbackFn != undefined)
+                {
+                    callbackFn(sanArray);
+                }        
+            });
+}
+
+
+// 
+function commitMove(gameHashkey, sanMove) 
+{
+    console.log("commitMove: " + sanMove + " | " + gameHashkey);
+    hc_send("commitMove",
+            JSON.stringify({gameHash: gameHashkey, san: sanMove}), 
+            //JSON.stringify({gameHash: gameHashkey.toString(), san: sanMove}), 
+            //{gameHash: gameHashkey, san: sanMove}, 
+            //{gameHash: gameHashkey.toString(), san: sanMove}, 
+            //{gameHash: JSON.stringify(gameHashkey), san: sanMove},     
+            function(moveHashkey)
+            {
+                // n/a
+                // Check no error?
+            });
 }
 
 //============================================================================
@@ -168,11 +259,16 @@ function getMyGames()
 // Add behavior to HTML
 $(window).ready(function() 
 {
+    console.log("holochess-com.js");
   // $("#handle").on("click", "", openSetHandle);
   // $('#setHandleButton').click(doSetHandle);
   $("#players").on("click", "li", selectOpponent);
   $("#challenge-button").click(commitChallenge);
   getProfile();
-  setInterval(getAllHandles, 2000);
-  setInterval(getMyGames, 3000);
+  // setInterval(getAllHandles, 2000);
+  getAllHandles();
+
+  $("#my-games").on("click", "li", selectGame);
+  // setInterval(getMyGames, 3000);
+  getMyGames();
 });

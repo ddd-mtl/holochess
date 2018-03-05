@@ -139,48 +139,56 @@ function getAgent(handle)
 // ==============================================================================
 
 // Create a Challenge Entry
-function commitChallenge(opponent, challengerPlaysWhite, isGamePublic)
+function commitChallenge(jsonMsg)
 {
+  debug("commitChallenge jsonMsg: "+ jsonMsg);
+
+  var challengeMsg = JSON.parse(jsonMsg);
   // Build and commit challenge entry to my source chain
   var challenge =
   {
     challenger          : ME,
-    opponent            : opponent,
-    challengerPlaysWhite: challengerPlaysWhite,
-    isGamePublic        : isGamePublic
+    opponent            : challengeMsg.opponent,
+    challengerPlaysWhite: challengeMsg.challengerPlaysWhite,
+    isGamePublic        : challengeMsg.isGamePublic
   };
   
   var challengeHashkey = commit('challenge', challenge);
 
-  debug("new challenge: "+ challengeHashkey + "\n\t challenger: " + ME + "\n\t opponent:" + opponent);
+  debug("new challenge: "+ challengeHashkey + "\n\t challenger: " + ME + "\n\t opponent  :" + challenge.opponent);
 
   // On the DHT, put a link on my hashkey, and my opponents hashkey, to the new challenge.
   commit("challenge_links", {Links:[{Base:ME,Link:challengeHashkey,Tag:"challengeInitiated"}]});
-  commit("challenge_links", {Links:[{Base:opponent,Link:challengeHashkey,Tag:"challengeReceived"}]});
+  commit("challenge_links", {Links:[{Base:challenge.opponent,Link:challengeHashkey,Tag:"challengeReceived"}]});
   return challengeHashkey;
 }
 
 
-// Create a Challenge Entry
-function commitMove(gameHashkey, san)
+/**
+ *  Create a Challenge Entry
+ */ 
+function commitMove(jsonMsg)
 {
+  var move = JSON.parse(jsonMsg);
+  debug("new move on game: "+ move.gameHash + "\n\t san: " + move.san);
+
   // Build and commit move entry to my source chain  
-  var move = { gameHash: gameHashkey, san: san };
-  var moveHashkey = commit('move', entry);
-
-  debug("new move on game: "+ gameHashkey + "\n\t san: " + san + "  (" + moveHashkey + ")");
-
+  //var move = { gameHash: gameHashkey, san: san };
+  var moveHashkey = commit('move', move);
+  debug("\tmove hashkey: " + moveHashkey);
   // On the DHT, put a link on the challenge's hashkey to the new move.
-  commit("move_links", {Links:[{Base:gameHashkey,Link:moveHashkey,Tag:"move"}]});
+  commit("move_links", {Links:[{Base:move.gameHash,Link:moveHashkey,Tag:"halfmove"}]});
   return moveHashkey;
 }
 
 
-// return array of all moves of a game, in SAN strings
+/**
+ *  return array of all moves of a game, in SAN strings
+ */ 
 function getMoves(gameHashkey)
 {
   // getLinks from DHT
-  var moves = getLoadedLinks(base, "move");
+  var moves = getLoadedLinks(gameHashkey, "halfmove");
   debug("getMoves of game: " + gameHashkey + "\n\t moves found: " + moves.length);
 
   // Sort by timestamp
@@ -191,8 +199,8 @@ function getMoves(gameHashkey)
   for(var i = 0; i < moves.length; i++)
   {
     var move = moves[i];
-    sanMoves.push(move.san);
-    debug("\t " + i + ". " + move.san);
+    sanMoves.push(move.Entry.san);
+    debug("\t " + i + ". " + move.Entry.san + " | " + move); 
   }
   return sanMoves;
 }
@@ -204,9 +212,11 @@ function getMyGames()
 {
   debug("getMyGames:");
   // getLinks from DHT
-  var challengeLinks = getNonloadedLinks(ME, "challengeInitiated");
-  debug("\t count: " + challengeLinks.length);
+  var challengeInitiatedLinks = getNonloadedLinks(ME, "challengeInitiated");
+  var challengeReceivedLinks = getNonloadedLinks(ME, "challengeReceived");
+  debug("\t Initiated: " + challengeInitiatedLinks.length + "  received: " + challengeReceivedLinks.length);
   
+  var challengeLinks = challengeInitiatedLinks.concat(challengeReceivedLinks);
   return challengeLinks;
 }
 
@@ -367,6 +377,7 @@ function validateCommit(entryType, entry, header, pkg, sources)
     case 'challenge_links':
     case 'handle_links':
     case 'directory_links':
+    case 'move_links':
       return true;
     default:
       // invalid entry name

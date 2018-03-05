@@ -10,21 +10,22 @@
 
     // Setup chess engine
     var game = new Chess();
-    var statusEl = $('#status');
+
+    var statusEl    = $('#status');
     var turnColorEl = $('#turn-color');
-    var boardEl = $('#myBoard');
-    var logEl = $('#logtable');
+    var boardEl     = $('#myBoard');
+    var logEl       = $('#logtable');
     var squareClass = '.square-55d63';
 
     var squareToHighlight;
     var colorToHighlight;
-    var moveCount = 0;
-    var hasProposedMove = false;
-    var lastValidMove = null;
+    var moveCount         = 0;
+    var hasProposedMove   = false;
+    var lastValidMove     = null;
     var lastSubmittedMove = null;
-    var canWhitePlay = true;
-    var lastSubmittedFen = null;
-    var canUndoMove = false;
+    var canWhitePlay      = true;
+    var lastSubmittedFen  = null;
+    var canUndoMove       = false;
 
     // utils
     var removeHighlights = function(color)
@@ -168,6 +169,7 @@
     // for castling, en passant, pawn promotion
     var board_onSnapEnd = function() 
     {
+        console.log("board_onSnapEnd: " + game.fen());
         board.position(game.fen());
         board_onMoveEnd();
     };
@@ -297,7 +299,32 @@
         $('#undoBtn').prop("disabled", !canUndoMove);
       }
 
-      
+
+      var loadGameCallback = function(sanArray)
+      {
+          console.log("loadGameCallback:");        
+          game.reset();
+          for(let i = 0; i < sanArray.length; i++)
+          {
+              console.log("\t" + i + ". " + sanArray[i]);
+              let move = game.move(sanArray[i]);            
+              if (move === null)
+              {
+                  alert("invalid move:" + sanArray[i]);
+              }
+          }
+          board_onSnapEnd();
+      }
+  
+      var loadGameRequest = function()
+      {
+          console.log("loadGameRequest called (" + g_activeGame + " | " + g_loadedGame + ")");
+          //if(g_activeGame && g_activeGame !== g_loadedGame)
+          {
+              loadGame(g_activeGame, loadGameCallback);
+          }
+      }
+
     // Setup Chessboard
     // ================
     var ChessboardConfig = 
@@ -320,9 +347,11 @@
     // var board = Chessboard('#myBoard2', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R')
     // var board = Chessboard('#myBoard', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R')
 
+    console.log("holochess.js");
     resetPage();
     updateStatus();
     updateTurnColor();
+    $("#load-game-button").click(loadGameRequest);
 
     // Button Behavior
     // ===============
@@ -350,16 +379,32 @@
         }
     });
     
+    $('#get-handles-button').on('click', function() 
+    {
+        getAllHandles();
+    });
+
+    $('#get-games-button').on('click', function() 
+    {
+        getMyGames();
+    });
 
     $('#submitBtn').on('click', function() 
     {
-        canUndoMove = false;
+        canUndoMove       = false;
         lastSubmittedMove = lastValidMove;
-        canWhitePlay = !canWhitePlay;
+        canWhitePlay      = !canWhitePlay;
         updateTurnColor();
         lastSubmittedFen = game.fen();
         $('#submitBtn').prop("disabled", true);
         $('#undoBtn').prop("disabled", true); 
+
+        const history = game.history();
+        const lastSan = history[history.length - 1];
+
+        console.log("Submit Move: " + lastSubmittedMove + "\t history: " + history.length + " | " + lastSan);
+
+        commitMove(g_loadedGame, lastSan);
 
         // Update UI
         if(game.turn() == 'b') // if current turn is black, that means white has played
@@ -371,7 +416,6 @@
         {
             logEl.find(".ch-move-" + moveCount).append("<td>" + lastSubmittedMove.from +'-' + lastSubmittedMove.to + "</td>");
         }        
-
     });   
 
 })() // end anonymous wrapper

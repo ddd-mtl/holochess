@@ -49,6 +49,10 @@
                     "DataFormat": "links"
                 },
                 {
+                    "Name": "move_links",
+                    "DataFormat": "links"
+                },                
+                {
                     "Name": "directory_links",
                     "DataFormat": "links"
                 },                                

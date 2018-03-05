@@ -63,7 +63,7 @@ challenge_links:
   - Links challenge to opponent, tag: "challengeReceived"
 
 move_links:
- - Links move to challenge, tag: "move"
+ - Links move to challenge, tag: "halfmove"
 
 directory_links: 
   - Links handle to App ("directory" anchor), tag: "handle"

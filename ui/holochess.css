@@ -34,6 +34,7 @@ tr:nth-child(even) {
   width: 300px;
 }
 
+#my-games li,
 #players li {
   cursor: pointer;
   padding-left:10px;
@@ -48,14 +49,14 @@ tr:nth-child(even) {
   text-align: center;
 }
 
-#games {
+#my-games {
   width: 100%;
   height: 300px;
   overflow: auto;
   padding-left: 10px;
 }
 
-#games .game {
+#my-games .game {
   padding-left: 5px;
 }
 
