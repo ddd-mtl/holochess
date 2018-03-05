@@ -19,14 +19,9 @@ var SOURCE_AS_HASH = true;
 // EXPOSED Functions: visible to the UI, can be called via localhost, web browser, or socket
 // ===============================================================================
 
-//
-function getMyHash()
-{
-    return ME;
-}
-
-
-// The definition of the function you intend to expose
+/**
+ *  return value of requested property
+ */ 
 function getAppProperty(name)
 {            
   if (name == "App_Agent_Hash")   { return App.Agent.Hash; }
@@ -40,21 +35,14 @@ function getAppProperty(name)
 // HANDLES / AGENT
 // ==============================================================================
 
-// commit first time handle and its links on the directory
-function commitFirstHandle(handle) 
+/** 
+ * return this agent's hashkey
+ */
+function getMyHash()
 {
-  // TODO confirm no collision
-   // On my source chain, commit a new handle entry
-  var key = commit("handle", handle);
-
-  debug(handle + " is " + key);
-
-  // On DHT, set links to my handle
-  commit("handle_links", {Links:[{Base:ME,Link:key,Tag:"handle"}]});
-  commit("directory_links", {Links:[{Base:APP_ID,Link:key,Tag:"handle"}]});
-
-  return key;
+  return ME;
 }
+
 
 /**
  * Set new handle for self. 
@@ -98,49 +86,54 @@ function commitNewHandle(handle)
 }
 
 
-// returns array of user keys to handles
+/**
+ *  return array of user keys to handles
+ */ 
 function getAllHandles() 
 {
   // if (property("enableDirectoryAccess") != "true") 
   // {
   //     return undefined;
   // }
-
   return getLoadedLinks(APP_ID, "handle", SOURCE_AS_HASH);
-
-  // var linkArray = getLoadedLinks(APP_ID, "handle");
-  // var handleArray = {};
-  // for (var i = 0; i < linkArray.length; i++) 
-  // {
-  //     var handle = {Hash:linkArray[i].Source, Entry: linkArray[i].Entry};
-  //     handleArray.push(handle);
-  // }
-  // return handleArray;
 }
 
-// returns the current handle of this node
+
+/**
+ *  return the current handle of this node
+ */ 
 function getMyHandle()
 {
   return getHandle(ME);
 }
 
-// returns the handle of an agent
-function getHandle(userHash)
+
+/**
+ * return the handle of an agent
+ */ 
+function getHandle(agentHashkey)
 {
-  //return getAnchor(userHash + ":handle");
+  // FIXME : check valid agentHashkey?
+  return getLoadedLinks(agentHashkey, "handle");
 }
 
-// gets the AgentID (userAddress) based on handle
-function getAgent(handle)
+
+/**
+ * return an Agent's hashkey based on the handle hashkey
+ */ 
+function getAgent(handleHashkey)
 {
-   //return getFromListAnchor("userDirectory", handle);
+  // FIXME
+  //return getFromListAnchor("userDirectory", handle);
 }
 
 
-// holochess
+// HOLOCHESS
 // ==============================================================================
 
-// Create a Challenge Entry
+/**
+ *  Create a Challenge Entry
+ */ 
 function commitChallenge(jsonMsg)
 {
   debug("commitChallenge jsonMsg: "+ jsonMsg);
@@ -172,10 +165,9 @@ function commitChallenge(jsonMsg)
 function commitMove(jsonMsg)
 {
   var move = JSON.parse(jsonMsg);
-  debug("new move on game: "+ move.gameHash + "\n\t san: " + move.san);
+  debug("new move on game: "+ move.gameHash + "\n\t san: " + move.san + " | " + move.index);
 
   // Build and commit move entry to my source chain  
-  //var move = { gameHash: gameHashkey, san: san };
   var moveHashkey = commit('move', move);
   debug("\tmove hashkey: " + moveHashkey);
   // On the DHT, put a link on the challenge's hashkey to the new move.
@@ -193,8 +185,8 @@ function getMoves(gameHashkey)
   var moves = getLoadedLinks(gameHashkey, "halfmove");
   debug("getMoves of game: " + gameHashkey + "\n\t moves found: " + moves.length);
 
-  // Sort by timestamp
-  moves.sort(function (a, b) {return b.timeStamp - a.timeStamp;} );
+  // Sort by move index
+  moves.sort(function (a, b) {return a.Entry.index - b.Entry.index;} );
 
   // Convert to SAN string array
   var sanMoves = [];  
@@ -202,13 +194,30 @@ function getMoves(gameHashkey)
   {
     var move = moves[i];
     sanMoves.push(move.Entry.san);
-    debug("\t " + i + ". " + move.Entry.san + " | " + move); 
+    debug("\t " + i + ". " + move.Entry.san + " | " + move.Entry.index); 
   }
   return sanMoves;
 }
 
 
-// return list of hash of games that corresponds to query
+/**
+ * Load Challenge from hashkey
+ * return null if requested entry is not 'challenge' type 
+ */
+function getChallenge(entryHashkey)
+{
+  console.log("getChallenge called: " + entryHashkey);  
+  var challenge = get(entryHashkey);
+  // console.log(challenge);
+  // console.log("challenge.EntryType: " + challenge.EntryType); 
+  // return challenge.EntryType === 'challenge' ? challenge : null;
+  return challenge;
+}
+
+
+/**
+ *  return list of hash of games that corresponds to query
+ */ 
 //// function getGamesBy(stateMask, challenger, opponent)
 function getMyGames()
 {
@@ -226,6 +235,23 @@ function getMyGames()
 // ==============================================================================
 // HELPERS: unexposed functions
 // ==============================================================================
+
+// commit first time handle and its links on the directory
+function commitFirstHandle(handle) 
+{
+  // TODO confirm no collision
+   // On my source chain, commit a new handle entry
+  var hashkey = commit("handle", handle);
+
+  debug(handle + " is " + hashkey);
+
+  // On DHT, set links to my handle
+  commit("handle_links", {Links:[{Base:ME,Link:hashkey,Tag:"handle"}]});
+  commit("directory_links", {Links:[{Base:APP_ID,Link:hashkey,Tag:"handle"}]});
+
+  return hashkey;
+}
+
 
 // return two node id's in alphabetical order
 function orderNodeIds(challenger, opponent) 

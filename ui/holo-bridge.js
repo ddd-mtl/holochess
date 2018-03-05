@@ -11,9 +11,10 @@
 // GLOBALS
 // ==============================================================================
 
-var g_myHash         = null; // Cached hashkey of this Agent
-var g_myHandle       = null; // Cached Handle of this Agent
-var g_loadedGame     = null; // Challenge hashkey loaded on chessboard
+var g_myHash                 = null; // Cached hashkey of this Agent
+var g_myHandle               = null; // Cached Handle of this Agent
+var g_loadedChallengeHashkey = null; // Challenge hashkey loaded on chessboard
+//var g_loadedChallengeEntry   = null; // Cached last requested Challenge Entry
 
 // var g_allHandles     = {};   // All known Handles on the holochain DHT
 
@@ -34,9 +35,9 @@ function ajax_send(fn, data, resultFn)
           resultFn(response);
       }
   ).fail(function(response)
-   {
-      console.log("\tresponse to \"" + fn + "\" failed: " + response.responseText);
-  })
+        {
+          console.log("\tresponse to \"" + fn + "\" failed: " + response.responseText);
+        })
   ;
 };
 
@@ -46,17 +47,30 @@ function ajax_send(fn, data, resultFn)
 // ==============================================================================
 
 /**
- * Callback callbackFn with agent's current handle
+ * Callback 'callbackFn' with agent's latest handle entry
  * @param {*} agentHashkey 
  * @param {*} callbackFn 
  */
 function hc_getHandle(agentHashkey, callbackFn)
 {
-    if (agentHashkey == undefined || callbackFn == undefined)
-    {
-        return;
-    }    
-    ajax_send("getHandle", agentHashkey, callbackFn);
+  console.log("hc_getHandle called: " + agentHashkey + " | " + callbackFn);
+  if (agentHashkey == undefined || callbackFn == undefined)
+  {
+    console.log("hc_getHandle abort: bad arguments");
+    return;
+  }    
+  ajax_send("getHandle", 
+            agentHashkey, 
+            function(json)
+            {
+              console.log("hc_getHandle callback");
+              if(!json)
+              {
+                return;
+              }
+              var handleLink = callbackFn(JSON.parse(json));
+              callbackFn(handleLink? handleLink.Entry : null);
+            });
 }
 
 
@@ -66,17 +80,16 @@ function hc_getHandle(agentHashkey, callbackFn)
  */
 function hc_getMyHandle() 
 {
-    if(g_myHandle)
-    {
-        return g_myHandle;
-    }
-    hc_getHandle(hc_getMyHash(), 
-                 function(handle)
-                 {
-                    g_myHandle = handle;
-                    // $("#playerid").html(handle);
-                 });
-    return "";
+  if(g_myHandle)
+  {
+    return g_myHandle;
+  }
+  hc_getHandle( hc_getMyHash(), 
+                function(handle)
+                {
+                  g_myHandle = handle;                  
+                });
+  return "";
 }
 
 
@@ -86,17 +99,17 @@ function hc_getMyHandle()
  */
 function hc_getMyHash() 
 {
-    if(g_myHash)
-    {
-        return g_myHash;
-    }
-    ajax_send(  "getMyHash",
-                undefined, 
-                function(me)
-                {
-                    g_myHash = me;
-                });
-    return null;
+  if(g_myHash)
+  {
+    return g_myHash;
+  }
+  ajax_send("getMyHash",
+            undefined, 
+            function(me)
+            {
+                g_myHash = me;
+            });
+  return null;
 }
 
 
@@ -106,19 +119,18 @@ function hc_getMyHash()
  */
 function hc_getAllHandles(callbackFn)
 {
-    if (callbackFn == undefined)
-    {
-        return;
-    }       
-    ajax_send(  "getAllHandles", 
-                undefined, 
-                function(json)
-                {
-                    callbackFn(JSON.parse(json));
-                }
-                );
+  if (callbackFn == undefined)
+  {
+    return;
+  }       
+  ajax_send("getAllHandles", 
+            undefined, 
+            function(json)
+            {
+                callbackFn(JSON.parse(json));
+            }
+            );
 }
-
 
 
 //===============================================================================
@@ -130,15 +142,15 @@ function hc_commitChallenge(opponent)
 {
   if (!opponent || opponent == undefined) 
   {
-      alert("pick a player first!");
-      return;
+    alert("pick a player first!");
+    return;
   }
   ajax_send("commitChallenge", 
             JSON.stringify({ opponent: opponent, challengerPlaysWhite: true, isGamePublic: true }),  // FIXME
             function(result)
             {
-                result = JSON.parse(result);
-                console.log("Challenge Hashkey: " + result);
+              result = JSON.parse(result);
+              console.log("Challenge Hashkey: " + result);
             }
             );  
 }
@@ -149,18 +161,41 @@ function hc_commitChallenge(opponent)
  */
 function hc_getMyGames(callbackFn) 
 {
-    if(callbackFn == undefined)
-    {
-        return;
-    }     
-    ajax_send(  "getMyGames", 
-                undefined, 
-                function(json) 
-                {
-                    callbackFn(JSON.parse(json));
-                });
+  if(callbackFn == undefined)
+  {
+    return;
+  }     
+  ajax_send("getMyGames", 
+            undefined, 
+            function(json) 
+            {
+              callbackFn(JSON.parse(json));
+            });
 }
 
+
+/** 
+ * 
+ */
+function hc_getChallenge(challengeHashkey, callbackFn)
+{
+  if (challengeHashkey == undefined || callbackFn == undefined)
+  {
+    return;
+  }    
+  console.log("hc_getChallenge called: " + challengeHashkey);
+  ajax_send(  "getChallenge",
+              challengeHashkey, 
+              function(result)
+              {
+                  challenge = JSON.parse(result);
+                  console.log("hc_getChallenge call returned: " + challenge);                    
+                  if(challenge)
+                  {
+                      callbackFn(JSON.parse(challenge));                        
+                  }      
+              });    
+}
 
 //===============================================================================
 // MOVES
@@ -169,39 +204,39 @@ function hc_getMyGames(callbackFn)
 //
 function hc_getMoves(gameHashkey, callbackFn) 
 {
-    console.log("loadGame called: " + gameHashkey);
-    // FIXME: check in canLoadGame state
-    ajax_send(  "getMoves",
-                gameHashkey, 
-                function(result)
-                {
-                    sanArray = JSON.parse(result);
-                    console.log("loadGame call returned: " + gameHashkey + "\t " + sanArray.length + " moves.");
-                    g_loadedGame = gameHashkey;
-                    // Return sanArray to caller
-                    if (callbackFn != undefined)
-                    {
-                        callbackFn(sanArray);
-                    }        
-                });
+  console.log("hc_getMoves called: " + gameHashkey);
+  // FIXME: check in canLoadGame state
+  ajax_send("getMoves",
+            gameHashkey, 
+            function(result)
+            {
+              sanArray = JSON.parse(result);
+              console.log("loadGame call returned: " + gameHashkey + "\t " + sanArray.length + " moves.");
+              g_loadedChallengeHashkey = gameHashkey;
+              // Return sanArray to caller
+              if (callbackFn != undefined)
+              {
+                callbackFn(sanArray);
+              }        
+            });
 }
 
 
 // 
-function hc_commitMove(gameHashkey, sanMove) 
+function hc_commitMove(gameHashkey, sanMove, index) 
 {
-    console.log("commitMove: " + sanMove + " | " + gameHashkey);
-    ajax_send(  "commitMove",
-                JSON.stringify({gameHash: gameHashkey, san: sanMove}), 
-                //JSON.stringify({gameHash: gameHashkey.toString(), san: sanMove}), 
-                //{gameHash: gameHashkey, san: sanMove}, 
-                //{gameHash: gameHashkey.toString(), san: sanMove}, 
-                //{gameHash: JSON.stringify(gameHashkey), san: sanMove},     
-                function(moveHashkey)
-                {
-                    // n/a
-                    // Check for error?
-                });
+  console.log("commitMove: " + index + ". " + sanMove + " | " + gameHashkey);
+  ajax_send("commitMove",
+            JSON.stringify({gameHash:gameHashkey, san:sanMove, index:index}), 
+            //JSON.stringify({gameHash: gameHashkey.toString(), san: sanMove}), 
+            //{gameHash: gameHashkey, san: sanMove}, 
+            //{gameHash: gameHashkey.toString(), san: sanMove}, 
+            //{gameHash: JSON.stringify(gameHashkey), san: sanMove},     
+            function(moveHashkey)
+            {
+              // n/a
+              // Check for error?
+            });
 }
 
 
@@ -215,6 +250,9 @@ $(window).ready(function()
   // $('#setHandleButton').click(doSetHandle);
   
   hc_getMyHash();
+  // wait for my hash before getting my handle
+  setTimeout(hc_getMyHandle, 1000);
+
   // setInterval(getAllHandles, 2000);
   // hc_getAllHandles();
   // setInterval(getMyGames, 3000);

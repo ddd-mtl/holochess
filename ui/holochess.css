@@ -31,7 +31,7 @@ tr:nth-child(even) {
 }
 
 .players {
-  width: 300px;
+  /* width: 300px; */
 }
 
 #my-games li,

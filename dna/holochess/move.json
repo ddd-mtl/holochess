@@ -7,7 +7,10 @@
     },
     "san": {
       "type": "string"
-    }    
+    },
+    "index": {
+      "type": "integer"
+    }
   },
-  "required": ["gameHash","san"]
+  "required": ["gameHash","san", "index"]
 }

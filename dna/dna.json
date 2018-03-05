@@ -107,7 +107,12 @@
                     "Name": "commitMove",
                     "CallingType": "json",
                     "Exposure": "public"
-                },                              
+                },
+                {
+                    "Name": "getChallenge",
+                    "CallingType": "json",
+                    "Exposure": "public"
+                },                                              
                 {
                     "Name": "getMyGames",
                     "CallingType": "json",
