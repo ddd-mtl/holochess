@@ -69,3 +69,8 @@ tr:nth-child(even) {
 #handle_block {
   margin-bottom:15px;
 }
+
+input[type="button"]:disabled {
+  opacity: 0.65; 
+  cursor: not-allowed;
+}

@@ -372,7 +372,8 @@
         {
             game.undo();
             lastSubmittedFen = game.fen();
-            $('#submitBtn').prop("disabled", true);            
+            $('#submitBtn').prop("disabled", true);
+            $('#undoBtn').prop("disabled", true);             
             lastSubmittedMove = null;
             canUndoMove = false;
             board_onSnapEnd();
