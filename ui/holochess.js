@@ -8,26 +8,33 @@
 ;(function () {
     'use strict'
 
-    // Setup chess engine
-    var game = new Chess();
-
+    var startingfen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    
+    // Html Elements
     var statusEl    = $('#status');
     var turnColorEl = $('#turn-color');
     var boardEl     = $('#myBoard');
     var logEl       = $('#logtable');
     var squareClass = '.square-55d63';
 
+    // Stateful variables
     var squareToHighlight;
     var colorToHighlight;
-    var moveCount         = 0;
-    var hasProposedMove   = false;
-    var lastValidMove     = null;
-    var lastSubmittedMove = null;
-    var canWhitePlay      = true;
-    var lastSubmittedFen  = null;
-    var canUndoMove       = false;
+    var moveCount;
+    var hasProposedMove;
+    var lastValidMove;
+    var lastSubmittedMove;
+    var canWhitePlay;
+    var lastSubmittedFen;
+    var canUndoMove;
+
+
+    var activeOpponent;
+    var activeGame;
 
     // utils
+    // ========================================================================
+
     var removeHighlights = function(color)
     {
         //console.log(boardEl.find(squareClass));
@@ -35,8 +42,8 @@
     };
 
 
-    // Setup Callbacks
-    // ===============
+    // Chessboard callbacks
+    // ========================================================================
 
     // only pick up pieces if game not over and for the side to move
     var board_onDragStart = function(source, piece, position, orientation) 
@@ -280,10 +287,11 @@
       };
       
 
+      /** 
+       * Reset App State
+       */      
       var resetPage = function()
       {
-        removeHighlights('b');
-        removeHighlights('w');
         squareToHighlight = null;
         colorToHighlight  = null;
         hasProposedMove   = false;
@@ -291,12 +299,20 @@
         lastSubmittedMove = null;
         moveCount         = 0;
         canWhitePlay      = true;
-        lastSubmittedFen  = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+        lastSubmittedFen  = null;
         canUndoMove       = false;
+
+        activeOpponent    = null;
+        activeGame        = null;
+
+        removeHighlights('b');
+        removeHighlights('w');        
         logEl.empty();
         logEl.append("<tr><th>#</th><th>White</th><th>Black</th></tr>");
         $('#submitBtn').prop("disabled", true);
-        $('#undoBtn').prop("disabled", !canUndoMove);
+        $('#undoBtn').prop("disabled", true);
+        $('#resetBtn').prop("disabled", true);  
+        $('#startBtn').prop("disabled", false);  
       }
 
 
@@ -321,7 +337,7 @@
           console.log("loadGameRequest called (" + g_activeGame + " | " + g_loadedGame + ")");
           //if(g_activeGame && g_activeGame !== g_loadedGame)
           {
-              loadGame(g_activeGame, loadGameCallback);
+              hc_getMoves(g_activeGame, loadGameCallback);
           }
       }
 
@@ -344,6 +360,9 @@
     };
     var board = Chessboard('#myBoard', ChessboardConfig);
 
+    // Setup chess engine
+    var game = new Chess();
+
     // var board = Chessboard('#myBoard2', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R')
     // var board = Chessboard('#myBoard', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R')
 
@@ -351,15 +370,30 @@
     resetPage();
     updateStatus();
     updateTurnColor();
-    $("#load-game-button").click(loadGameRequest);
 
-    // Button Behavior
-    // ===============
+    // Buttons Behavior
+    // ========================================================================
+
+    $("#load-game-button").click(loadGameRequest);
+    
 
     $('#startBtn').on('click', function() 
     {
-        game.reset();
+        // game.reset();
+        // board.clear();
+        // resetPage();
+        // updateStatus();
+        // updateTurnColor();
         board.start();
+        resetPage();
+        updateStatus();
+        updateTurnColor();        
+    });
+
+    $('#resetBtn').on('click', function() 
+    {
+        game.reset();
+        board.clear();
         resetPage();
         updateStatus();
         updateTurnColor();
@@ -371,7 +405,7 @@
         if(canUndoMove === true)
         {
             game.undo();
-            lastSubmittedFen = game.fen();
+            lastSubmittedFen = game.fen();            
             $('#submitBtn').prop("disabled", true);
             $('#undoBtn').prop("disabled", true);             
             lastSubmittedMove = null;
@@ -380,15 +414,6 @@
         }
     });
     
-    $('#get-handles-button').on('click', function() 
-    {
-        getAllHandles();
-    });
-
-    $('#get-games-button').on('click', function() 
-    {
-        getMyGames();
-    });
 
     $('#submitBtn').on('click', function() 
     {
@@ -405,7 +430,7 @@
 
         console.log("Submit Move: " + lastSubmittedMove + "\t history: " + history.length + " | " + lastSan);
 
-        commitMove(g_loadedGame, lastSan);
+        hc_commitMove(g_loadedGame, lastSan);
 
         // Update UI
         if(game.turn() == 'b') // if current turn is black, that means white has played
@@ -418,5 +443,121 @@
             logEl.find(".ch-move-" + moveCount).append("<td>" + lastSubmittedMove.from +'-' + lastSubmittedMove.to + "</td>");
         }        
     });   
+
+
+    $("#challenge-button").on("click", function()
+    {
+        hc_commitChallenge(activeOpponent);
+    });    
+
+
+    $('#get-handles-button').on('click', function() 
+    {
+        hc_getAllHandles(updateOpponentList);
+    });
+
+
+    $('#get-games-button').on('click', function() 
+    {
+        $("#my-games").empty();
+        hc_getMyGames(makeMyGamesUl);
+    });
+
+
+    // Select Opponent
+    $("#players").on("click", "li", function()
+    {
+        $("#players li").removeClass("selected-player");
+        activeOpponent = $(this).data('id');
+        displayActiveOpponent();
+        
+    }); 
+
+
+    // Select Game
+    $("#my-games").on("click", "li", function()
+    {
+      $("#my-games li").removeClass("selected-player");
+      activeGame = $(this).data('id');
+      displayActiveGame();
+    });
+
+    
+//===============================================================================
+// OPPONENTS
+// ==============================================================================
+
+//
+var displayActiveOpponent = function()
+{
+  var elem = $("#players li[data-id=" + activeOpponent + "]");
+  $(elem).addClass("selected-player");
+  //$("#games-header").text("Games with " + $(elem).data("name"));
+  //loadHistory();
+}
+
+var updateOpponentList = function(allHandles) 
+{
+  $("#players").empty();
+  for (var x = 0; x < allHandles.length; x++) 
+  {
+      $("#players").append(makePlayerLi(allHandles[x]));
+  }
+  if (activeOpponent) 
+  {
+    displayActiveOpponent();
+  }
+}
+
+var makePlayerLi = function(handle_object) 
+{
+  // console.log("handle_object: " + handle_object.Hash);  
+  // console.log("g_myHash     : " + g_myHash);  
+  if(handle_object.Hash == g_myHash) // FIXME must get agent hash with that handle :(
+  {
+    return;
+  }
+  return  "<li data-id=\"" + handle_object.Hash + "\""
+        + "data-name=\"" + handle_object.Entry + "\">"
+        + handle_object.Entry
+        + "</li>";
+}
+
+
+//===============================================================================
+// GAMES
+// ==============================================================================
+
+/**
+ * 
+ * @param {array of challenge hashkeys} gameArray 
+ */
+var makeMyGamesUl = function(gameArray)
+{
+    if(!gameArray || gameArray == undefined)
+    {
+        return;
+    }
+    for (let i = 0; i < gameArray.length; i++)
+    {
+        var gameHashkey = gameArray[i];
+        $("#my-games").append(
+            "<li data-id=\"" + gameHashkey + "\""
+            + "data-name=\"" + gameHashkey + "\">"
+            + gameHashkey
+            + "</li>");
+    }
+}
+
+
+//
+var displayActiveGame = function()
+{
+  var elem = $("#my-games li[data-id=" + g_activeGame + "]");
+  $(elem).addClass("selected-player");
+  //$("#games-header").text("Games with " + $(elem).data("name"));
+  //loadHistory();
+}
+
 
 })() // end anonymous wrapper

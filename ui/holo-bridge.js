@@ -3,24 +3,26 @@
 // Use of this source code is governed by GPLv3 found in the LICENSE file
 //---------------------------------------------------------------------------------------
 
+// Responsable only for communication with holochain zome
+//      Doesnt know anything about html / css
+// Communicates with  Holochain.js
+
 //===============================================================================
 // GLOBALS
 // ==============================================================================
 
-// var g_users          = {};
-var g_myHash         = null;
-var g_myHandle       = null;
-var g_allHandles     = {};   // All known handles on the holochain DHT
-var g_activeOpponent = null; // agent hashkey selected in #players list
-var g_activeGame     = null; // game hashkey selected in #my-games list
-var g_loadedGame     = null; // game hashkey loaded on chessboard
+var g_myHash         = null; // Cached hashkey of this Agent
+var g_myHandle       = null; // Cached Handle of this Agent
+var g_loadedGame     = null; // Challenge hashkey loaded on chessboard
+
+// var g_allHandles     = {};   // All known Handles on the holochain DHT
 
 //===============================================================================
 // HOLOCHAIN HELPERS
 // ==============================================================================
 
-// use send to make an ajax call to your exposed functions
-function hc_send(fn, data, resultFn) 
+// use send to make an ajax call to zome's exposed functions
+function ajax_send(fn, data, resultFn) 
 {
   console.log("calling: " + fn + " with " + JSON.stringify(data));
   $.post(
@@ -43,232 +45,178 @@ function hc_send(fn, data, resultFn)
 // HANDLES / AGENT
 // ==============================================================================
 
-function getHandle(who, callbackFn)
+/**
+ * Callback callbackFn with agent's current handle
+ * @param {*} agentHashkey 
+ * @param {*} callbackFn 
+ */
+function hc_getHandle(agentHashkey, callbackFn)
 {
-  hc_send("getHandle",
-          who, 
-          function (handle)
-          {
-            if (callbackFn != undefined)
-            {
-                callbackFn(handle);
-            }
-          });
+    if (agentHashkey == undefined || callbackFn == undefined)
+    {
+        return;
+    }    
+    ajax_send("getHandle", agentHashkey, callbackFn);
 }
 
-//
-function getMyHandle() 
+
+/** 
+ * Get this Agent's Handle
+ * Tries to get cache first
+ */
+function hc_getMyHandle() 
 {
-  getHandle(g_myHash, 
-            function(handle)
-            {
-                g_myHandle = handle;
-                $("#handle").html(handle);
-            });
+    if(g_myHandle)
+    {
+        return g_myHandle;
+    }
+    hc_getHandle(hc_getMyHash(), 
+                 function(handle)
+                 {
+                    g_myHandle = handle;
+                    // $("#playerid").html(handle);
+                 });
+    return "";
 }
 
-function getProfile() 
+
+/** 
+ * Get this Agent's Hash
+ * Tries to get cache first
+ */
+function hc_getMyHash() 
 {
-  hc_send("getMyHash",
-          undefined, 
-          function(me)
-          {
-              g_myHash = me;
-              getMyHandle();
-              $("#playerid").html(me);
-          });
+    if(g_myHash)
+    {
+        return g_myHash;
+    }
+    ajax_send(  "getMyHash",
+                undefined, 
+                function(me)
+                {
+                    g_myHash = me;
+                });
+    return null;
 }
 
-function getAllHandles(callbackFn)
+
+/**
+ * Calls zome's getAllHandles
+ * @param {*} callbackFn 
+ */
+function hc_getAllHandles(callbackFn)
 {
-  hc_send("getAllHandles", 
-          undefined, 
-          function(json)
-          {
-              g_allHandles = JSON.parse(json);
-              updateOpponentList();
-              if (callbackFn != undefined)
-              {
-                  callbackFn(g_allHandles);
-              }
-          });
+    if (callbackFn == undefined)
+    {
+        return;
+    }       
+    ajax_send(  "getAllHandles", 
+                undefined, 
+                function(json)
+                {
+                    callbackFn(JSON.parse(json));
+                }
+                );
 }
+
 
 
 //===============================================================================
-// OPPONENTS
-// ==============================================================================
-
-function updateOpponentList() 
-{
-  $("#players").empty();
-  for (var x = 0; x < g_allHandles.length; x++) 
-  {
-      $("#players").append(makePlayerLi(g_allHandles[x]));
-  }
-  if (g_activeOpponent) 
-  {
-      setActiveOpponent();
-  }
-}
-
-function makePlayerLi(handle_object) 
-{
-  // console.log("handle_object: " + handle_object.Hash);  
-  // console.log("g_myHash     : " + g_myHash);  
-  if(handle_object.Hash == g_myHash) // FIXME must get agent hash with that handle :(
-  {
-    return;
-  }
-  return  "<li data-id=\"" + handle_object.Hash + "\""
-        + "data-name=\"" + handle_object.Entry + "\">"
-        + handle_object.Entry
-        + "</li>";
-}
-
-
-//
-function selectOpponent(event) 
-{
-  $("#players li").removeClass("selected-player");
-  g_activeOpponent = $(this).data('id');
-  setActiveOpponent();
-}
-
-
-//
-function setActiveOpponent()
-{
-  var elem = $("#players li[data-id=" + g_activeOpponent + "]");
-  $(elem).addClass("selected-player");
-  //$("#games-header").text("Games with " + $(elem).data("name"));
-  //loadHistory();
-}
-
-//===============================================================================
-// GAMES
+// CHALLENGES
 // ==============================================================================
 
 // 
-function commitChallenge() 
+function hc_commitChallenge(opponent) 
 {
-  if (!g_activeOpponent || g_activeOpponent == undefined) 
+  if (!opponent || opponent == undefined) 
   {
       alert("pick a player first!");
       return;
   }
-  hc_send("commitChallenge", 
-          JSON.stringify({ opponent: g_activeOpponent, challengerPlaysWhite: true, isGamePublic: true }),  // FIXME
-          function(result)
-          {
-              result = JSON.parse(result);
-              console.log("Challenge Hashkey: " + result);
-          }
-        );  
-}
-
-
-function makeGameLi(gameHashkey) 
-{
-  // console.log("handle_object: " + handle_object.Hash);  
-  // console.log("g_myHash     : " + g_myHash);  
-
-  return  "<li data-id=\"" + gameHashkey + "\""
-        + "data-name=\"" + gameHashkey + "\">"
-        + gameHashkey
-        + "</li>";
-}
-
-
-function getMyGames() 
-{
-    $("#my-games").empty();
-  hc_send("getMyGames", 
-          undefined, 
-          function(json) 
-          {
-            gameArray = JSON.parse(json);
-            // $("#my-games").html("");
-            for (var x = 0; x < gameArray.length; x++)
+  ajax_send("commitChallenge", 
+            JSON.stringify({ opponent: opponent, challengerPlaysWhite: true, isGamePublic: true }),  // FIXME
+            function(result)
             {
-                $("#my-games").append(makeGameLi(gameArray[x]));
+                result = JSON.parse(result);
+                console.log("Challenge Hashkey: " + result);
             }
-          });
+            );  
 }
 
 
-//
-function selectGame(event) 
+/** 
+ * Calls zome's "getMyGames"
+ */
+function hc_getMyGames(callbackFn) 
 {
-  $("#my-games li").removeClass("selected-player");
-  g_activeGame = $(this).data('id');
-  setActiveGame();
+    if(callbackFn == undefined)
+    {
+        return;
+    }     
+    ajax_send(  "getMyGames", 
+                undefined, 
+                function(json) 
+                {
+                    callbackFn(JSON.parse(json));
+                });
 }
 
 
-//
-function setActiveGame()
-{
-  var elem = $("#my-games li[data-id=" + g_activeGame + "]");
-  $(elem).addClass("selected-player");
-  //$("#games-header").text("Games with " + $(elem).data("name"));
-  //loadHistory();
-}
-
+//===============================================================================
+// MOVES
+// ==============================================================================
 
 //
-function loadGame(gameHashkey, callbackFn) 
+function hc_getMoves(gameHashkey, callbackFn) 
 {
     console.log("loadGame called: " + gameHashkey);
     // FIXME: check in canLoadGame state
-    hc_send("getMoves",
-            gameHashkey, 
-            function(result)
-            {
-                sanArray = JSON.parse(result);
-                console.log("loadGame call returned: " + gameHashkey + "\t " + sanArray.length + " moves.");
-                g_loadedGame = gameHashkey;
-                // Return sanArray to caller
-                if (callbackFn != undefined)
+    ajax_send(  "getMoves",
+                gameHashkey, 
+                function(result)
                 {
-                    callbackFn(sanArray);
-                }        
-            });
+                    sanArray = JSON.parse(result);
+                    console.log("loadGame call returned: " + gameHashkey + "\t " + sanArray.length + " moves.");
+                    g_loadedGame = gameHashkey;
+                    // Return sanArray to caller
+                    if (callbackFn != undefined)
+                    {
+                        callbackFn(sanArray);
+                    }        
+                });
 }
 
 
 // 
-function commitMove(gameHashkey, sanMove) 
+function hc_commitMove(gameHashkey, sanMove) 
 {
     console.log("commitMove: " + sanMove + " | " + gameHashkey);
-    hc_send("commitMove",
-            JSON.stringify({gameHash: gameHashkey, san: sanMove}), 
-            //JSON.stringify({gameHash: gameHashkey.toString(), san: sanMove}), 
-            //{gameHash: gameHashkey, san: sanMove}, 
-            //{gameHash: gameHashkey.toString(), san: sanMove}, 
-            //{gameHash: JSON.stringify(gameHashkey), san: sanMove},     
-            function(moveHashkey)
-            {
-                // n/a
-                // Check no error?
-            });
+    ajax_send(  "commitMove",
+                JSON.stringify({gameHash: gameHashkey, san: sanMove}), 
+                //JSON.stringify({gameHash: gameHashkey.toString(), san: sanMove}), 
+                //{gameHash: gameHashkey, san: sanMove}, 
+                //{gameHash: gameHashkey.toString(), san: sanMove}, 
+                //{gameHash: JSON.stringify(gameHashkey), san: sanMove},     
+                function(moveHashkey)
+                {
+                    // n/a
+                    // Check for error?
+                });
 }
+
 
 //============================================================================
 
 // Add behavior to HTML
 $(window).ready(function() 
 {
-    console.log("holochess-com.js");
+  console.log("holo-bridge.js INIT");
   // $("#handle").on("click", "", openSetHandle);
   // $('#setHandleButton').click(doSetHandle);
-  $("#players").on("click", "li", selectOpponent);
-  $("#challenge-button").click(commitChallenge);
-  getProfile();
+  
+  hc_getMyHash();
   // setInterval(getAllHandles, 2000);
-  getAllHandles();
-
-  $("#my-games").on("click", "li", selectGame);
+  // hc_getAllHandles();
   // setInterval(getMyGames, 3000);
-  getMyGames();
+  // hc_getMyGames();
 });

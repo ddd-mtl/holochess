@@ -16,62 +16,69 @@
   <!-- One Row Bootstrap Grid -->
   <div class="container">
     <div class="row">
-      <div class="col-md-4">
-        <div class="panel panel-default">
-          <div class="panel-body">
-          <!-- Board view -->
-          <div id="myBoard"></div>
-          <p><span id="turn-color"></span> turn</p>
-          <p>Status: <span id="status"></span></p>
-          <p>Player: <span id="playerid"></span></p>
-          <input type="button" id="startBtn" value="Reset" />
-          <input type="button" id="undoBtn" value="Undo" />
-          <input type="button" id="submitBtn" value="Submit" />  
-          <!-- <input type="button" id="startBtn" value="Auto-submit" /> -->
-        </div>
-      </div>
-        <!-- Log -->
-        <div id="log">    
-            <p id="log-title">Game log</p>
-            <table id="logtable"></table>
-        </div>
-      </div>
-
+            
       <!-- Players panel -->
-      <div class="col-md-4 players">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              Players
-              <div class="row" id="challenge-button-row">
-                  <button id="get-handles-button" type="button" class="btn btn-primary">Get All Handles</button>          
-                  <button id="challenge-button" type="button" class="btn btn-primary">Challenge Player!</button>
-                </div>
-            </div>
-            <div class="panel-body">
-              <ul id="players">
-              </ul>
-            </div>
+      <div class="col-md-3 players">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            Players
+            <div class="row" id="challenge-button-row">
+                <button id="get-handles-button" type="button" class="btn btn-primary">Get All Handles</button>          
+                <button id="challenge-button" type="button" class="btn btn-primary">Challenge Player!</button>
+              </div>
           </div>
-
+          <div class="panel-body">
+            <ul id="players">
+            </ul>
+          </div>
         </div>
+      </div>
 
-        <!-- Games panel -->
-        <div class="col-md-4">
+        <!-- My games panel -->
+        <div class="col-md-3">
           <div class="panel panel-default">
-              <div id="my-games-header" class="panel-heading">
-                My Games
-                <div class="row" id="load-game-button-row">
-                    <button id="get-games-button" type="button" class="btn btn-primary">Get My Games</button>          
+            <div id="my-games-header" class="panel-heading">
+              My Games
+              <div class="row" id="load-game-button-row">
+                  <button id="get-games-button" type="button" class="btn btn-primary">Get My Games</button>          
 
-                    <button id="load-game-button" type="button" class="btn btn-primary">Load Game</button>
-                  </div> 
-                </div>                        
+                  <button id="load-game-button" type="button" class="btn btn-primary">Load Game</button>
+                </div> 
+              </div>                        
             <div class="panel-body">                 
               <ul id="my-games">
               </ul>
             </div>
           </div>
-        </div>                 
+        </div> 
+        
+      <!-- Move log panel -->
+      <div class="col-md-3">
+        <div id="log" class="panel panel-default">    
+            <div class="panel-heading" id="log-title">Move log</div>
+            <div class="panel-body">
+              <table id="logtable"></table>
+            </div>
+        </div>
+      </div>
+
+      <!-- Board panel -->      
+      <div class="col-md-3">
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div id="myBoard"></div>
+              <p><span id="turn-color"></span> turn</p>
+              <p>Status: <span id="status"></span></p>
+              <p>Player: <span id="playerid"></span></p>
+              <input type="button" id="startBtn" value="1p Start" />
+              <input type="button" id="resetBtn" value="Reset" />
+              <input type="button" id="undoBtn" value="Undo" />
+              <input type="button" id="submitBtn" value="Submit" />  
+              <!-- <input type="button" id="startBtn" value="Auto-submit" /> -->
+            </div>
+          </div>
+        </div>
+
     </div> <!-- row -->
   </div>  
  
