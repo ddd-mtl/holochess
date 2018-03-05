@@ -4,6 +4,8 @@
 var APP_ID = App.DNA.Hash;
 var ME     = App.Key.Hash;
 
+var GAME_MAX_FULLMOVE     = 300; // arbitrary limit to game size
+
 var GAME_STATE_NULL               = 1 << 0;
 var GAME_STATE_CHALLENGE_PENDING  = 1 << 1;
 var GAME_STATE_ACTIVE             = 1 << 2;
