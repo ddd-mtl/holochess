@@ -352,18 +352,18 @@ var updateStatus = function()
    */      
   var resetApp = function()
   {
-    squareToHighlight = null;
-    colorToHighlight  = null;
-    hasProposedMove   = false;
-    lastValidMove     = null;
-    lastSubmittedMove = null;
-    canWhitePlay      = null;
-    iPlayWhite        = null;
-    lastSubmittedFen  = null;
-    canUndoMove       = false;
-    canSubmit         = false;
-    mustSubmitOnHolochain        = true;
-    moveCount         = 0;
+    squareToHighlight     = null;
+    colorToHighlight      = null;
+    hasProposedMove       = false;
+    lastValidMove         = null;
+    lastSubmittedMove     = null;
+    canWhitePlay          = null;
+    iPlayWhite            = null;
+    lastSubmittedFen      = null;
+    canUndoMove           = false;
+    canSubmit             = false;
+    mustSubmitOnHolochain = true;
+    moveCount             = 0;
 
     activeOpponentHashkey  = null;
     activeChallengeHashkey = null;
@@ -373,7 +373,7 @@ var updateStatus = function()
     game.reset();
     board.clear();
     board.orientation('white');
-    
+
     removeHighlights('b');
     removeHighlights('w');        
     logEl.empty();

@@ -19,11 +19,16 @@
             
       <!-- Players panel -->
       <div class="col-md-3 players">
+        <!-- <div class="input-prepend input-append">
+          <span class="add-on">@</span>
+          <input class="span2" type="text" placeholder="Username" required>
+          <button class="btn" id="handle-input" type="button">Submit</button>
+        </div> -->
         <div class="panel panel-default">
           <div class="panel-heading">
             Players <span id="my-handle"></span>
             <div class="row" id="challenge-button-row">
-                <button id="get-handles-button" type="button" class="btn btn-primary">Get Handles</button>          
+                <button id="get-handles-button" type="button" class="btn btn-primary">Get Players</button>          
                 <button id="challenge-button" type="button" class="btn btn-primary">Challenge Player!</button>
               </div>
           </div>
@@ -34,24 +39,24 @@
         </div>
       </div>
 
-        <!-- My games panel -->
-        <div class="col-md-3">
-          <div class="panel panel-default">
-            <div id="my-games-header" class="panel-heading">
-              My Games
-              <div class="row" id="load-game-button-row">
-                  <button id="get-games-button" type="button" class="btn btn-primary">Get My Games</button>          
+      <!-- My games panel -->
+      <div class="col-md-3">
+        <div class="panel panel-default">
+          <div id="my-games-header" class="panel-heading">
+            My Games
+            <div class="row" id="load-game-button-row">
+                <button id="get-games-button" type="button" class="btn btn-primary">Get my games</button>          
 
-                  <button id="load-game-button" type="button" class="btn btn-primary">Load Game</button>
-                  <input type="button" id="sandbox-button" value="Sandbox" />
-                </div> 
-              </div>                        
-            <div class="panel-body">                 
-              <ul id="my-games">
-              </ul>
-            </div>
+                <button id="load-game-button" type="button" class="btn btn-primary">Load game</button>
+                <input type="button" id="sandbox-button" value="Sandbox" />
+              </div> 
+            </div>                        
+          <div class="panel-body">                 
+            <ul id="my-games">
+            </ul>
           </div>
-        </div> 
+        </div>
+      </div> 
         
       <!-- Move log panel -->
       <div class="col-md-3">

@@ -66,7 +66,7 @@ move_links:
  - Links move to challenge, tag: "halfmove"
 
 directory_links: 
-  - Links handle to App ("directory" anchor), tag: "handle"
+  - Links agent to App ("directory" anchor), tag: "player"
 
 ## Anchors
 FIXME

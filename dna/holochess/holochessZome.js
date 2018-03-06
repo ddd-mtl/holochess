@@ -78,8 +78,8 @@ function commitNewHandle(handle)
           ]});
   commit("directory_links",
           {Links:[
-              {Base:APP_ID, Link:previousHandleHashkey, Tag:"handle", LinkAction:HC.LinkAction.Del},
-              {Base:APP_ID, Link:newHandleHashkey, Tag:"handle"}
+              {Base:APP_ID, Link:previousHandleHashkey, Tag:"player", LinkAction:HC.LinkAction.Del},
+              {Base:APP_ID, Link:newHandleHashkey, Tag:"player"}
           ]});
 
   return newHandleHashkey;  
@@ -95,7 +95,8 @@ function getAllHandles()
   // {
   //     return undefined;
   // }
-  return getLoadedLinks(APP_ID, "handle", SOURCE_AS_HASH);
+  var linkArray = getLoadedLinks(APP_ID, "player", SOURCE_AS_HASH);
+  return (linkArray? linkArray : []);
 }
 
 
@@ -104,7 +105,10 @@ function getAllHandles()
  */ 
 function getMyHandle()
 {
-  return getHandle(ME);
+  debug("getMyHandle");
+  var handle = getHandle(ME);
+  debug("\t" + handle);
+  return handle;
 }
 
 
@@ -113,18 +117,27 @@ function getMyHandle()
  */ 
 function getHandle(agentHashkey)
 {
+  debug("getHandle: " + agentHashkey);
   // FIXME : check valid agentHashkey?
-  return getLoadedLinks(agentHashkey, "handle");
+  var linkArray = getLoadedLinks(agentHashkey, "handle");
+  if(!linkArray || linkArray.length != 1)
+  {
+    return [];
+  }
+  return linkArray[0].Entry;
 }
 
 
 /**
- * return an Agent's hashkey based on the handle hashkey
+ *  return array of user keys to handles
  */ 
-function getAgent(handleHashkey)
+function getAllAgents() 
 {
-  // FIXME
-  //return getFromListAnchor("userDirectory", handle);
+  // if (property("enableDirectoryAccess") != "true") 
+  // {
+  //     return undefined;
+  // }
+  return getLoadedLinks(APP_ID, "player", SOURCE_AS_HASH);
 }
 
 
@@ -134,18 +147,21 @@ function getAgent(handleHashkey)
 /**
  *  Create a Challenge Entry
  */ 
-function commitChallenge(jsonMsg)
+function commitChallenge(challenge)
 {
-  debug("commitChallenge jsonMsg: "+ jsonMsg);
+  if(!challenge)
+  {
+    return null;
+  }
+  debug("commitChallenge jsonMsg: "+ JSON.stringify(challenge));
 
-  var challengeMsg = JSON.parse(jsonMsg);
   // Build and commit challenge entry to my source chain
   var challenge =
   {
     challenger          : ME,
-    opponent            : challengeMsg.opponent,
-    challengerPlaysWhite: challengeMsg.challengerPlaysWhite,
-    isGamePublic        : challengeMsg.isGamePublic
+    opponent            : challenge.opponent,
+    challengerPlaysWhite: challenge.challengerPlaysWhite,
+    isGamePublic        : challenge.isGamePublic
   };
   
   var challengeHashkey = commit('challenge', challenge);
@@ -162,9 +178,12 @@ function commitChallenge(jsonMsg)
 /**
  *  Create a Challenge Entry
  */ 
-function commitMove(jsonMsg)
+function commitMove(move)
 {
-  var move = JSON.parse(jsonMsg);
+  if(!move)
+  {
+    return null;
+  }
   debug("new move on game: "+ move.gameHash + "\n\t san: " + move.san + " | " + move.index);
 
   // Build and commit move entry to my source chain  
@@ -206,12 +225,10 @@ function getMoves(gameHashkey)
  */
 function getChallenge(entryHashkey)
 {
-  console.log("getChallenge called: " + entryHashkey);  
+  debug("getChallenge called: " + entryHashkey);  
   var challenge = get(entryHashkey);
-  // console.log(challenge);
-  // console.log("challenge.EntryType: " + challenge.EntryType); 
-  // return challenge.EntryType === 'challenge' ? challenge : null;
-  return challenge;
+  //debug(challenge);
+  return JSON.parse(challenge);
 }
 
 
@@ -243,20 +260,13 @@ function commitFirstHandle(handle)
    // On my source chain, commit a new handle entry
   var hashkey = commit("handle", handle);
 
-  debug(handle + " is " + hashkey);
+  debug(handle + " stored at " + hashkey);
 
   // On DHT, set links to my handle
   commit("handle_links", {Links:[{Base:ME,Link:hashkey,Tag:"handle"}]});
-  commit("directory_links", {Links:[{Base:APP_ID,Link:hashkey,Tag:"handle"}]});
+  commit("directory_links", {Links:[{Base:APP_ID,Link:hashkey,Tag:"player"}]});
 
   return hashkey;
-}
-
-
-// return two node id's in alphabetical order
-function orderNodeIds(challenger, opponent) 
-{
-  return (challenger < opponent ? challenger + "|" + opponent : opponent + "|" + challenger);
 }
 
 
@@ -274,6 +284,7 @@ function hasErrorOccurred(result)
  */
 function getLoadedLinks(base, tag, canSourceBeHash) 
 {
+  debug("getLoadedLinks: " + base + " | tag : " + tag + " | " + canSourceBeHash);   
   // Get the tag from the base in the DHT
   var links = getLinks(base, tag, {Load:true});
 
@@ -286,12 +297,13 @@ function getLoadedLinks(base, tag, canSourceBeHash)
 
   // Build smaller array with just Hash and Entry value
   var miniLinkArray = [];
-  for (var i = 0;i < links.length; i++) 
+  for (var i = 0; i < links.length; i++) 
   {
       var link     = links[i];
       var miniLink = (typeof canSourceBeHash !== 'undefined'? {Hash:link.Source, Entry: link.Entry} : {Hash:link.Hash, Entry: link.Entry});
       miniLinkArray.push(miniLink);
   }
+  debug("\t" + JSON.stringify(miniLinkArray));
   return miniLinkArray;
 }
 
@@ -305,13 +317,11 @@ function getNonloadedLinks(base, tag)
 {
   // Get the tag from the base in the DHT
   var links = getLinks(base, tag, {Load:false});
-  // Handle error
   if (hasErrorOccurred(links)) 
   {
     debug("getNonloadedLinks failed: " + base + " | tag : " + tag);    
     return [];
   }
-
   // debug("Links:" + JSON.stringify(links));
 
   // Build nicer array
@@ -337,7 +347,7 @@ function getNonloadedLinks(base, tag)
  */
 function genesis()
 {
-  commitFirstHandle(App.Agent.String); // FIXME
+  commitFirstHandle(App.Agent.String);
   return true;
 }
 

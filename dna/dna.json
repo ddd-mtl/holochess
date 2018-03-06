@@ -84,6 +84,11 @@
                     "Exposure":"public"
                 },
                 {
+                    "Name": "getAllAgents",
+                    "CallingType": "json",
+                    "Exposure":"public"
+                },                
+                {
                     "Name": "getHandle",
                     "CallingType": "string",
                     "Exposure":"public"
@@ -92,7 +97,7 @@
                     "Name": "getMyHandle",
                     "CallingType": "string",
                     "Exposure":"public"
-                },
+                },             
                 {
                     "Name": "getAgent",
                     "CallingType": "string",
@@ -100,11 +105,6 @@
                 },                
                 {
                     "Name": "commitChallenge",
-                    "CallingType": "json",
-                    "Exposure": "public"
-                },
-                {
-                    "Name": "commitMove",
                     "CallingType": "json",
                     "Exposure": "public"
                 },
@@ -118,6 +118,11 @@
                     "CallingType": "json",
                     "Exposure":"public"
                 },
+                {
+                    "Name": "commitMove",
+                    "CallingType": "json",
+                    "Exposure": "public"
+                },                
                 {
                     "Name": "getMoves",
                     "CallingType": "json",
