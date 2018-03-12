@@ -229,6 +229,7 @@ function getChallenge(entryHashkey)
   var challenge = get(entryHashkey);
   //debug(challenge);
   return JSON.parse(challenge);
+  //return challenge;
 }
 
 

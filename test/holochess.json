@@ -1,31 +1,65 @@
 {
     "Tests": [
         {
-            "Convey": "We can create a new holochessEntry",
-            "Zome": "holochess",
-            "FnName": "holochessEntryCreate",
-            "Input": {
-                "content": "this is the entry body",
-                "timestamp": 12345
-            },
-            "Output": "%h%",
+            "Convey"  : "getMyHandle: My handle should be my Agent.String",
+            "Zome"    : "Holochess",
+            "FnName"  : "getMyHandle",
+            "Input"   : "",
+            "Output"  : "%agentstr%",
             "Exposure": "public",
-            "Raw": false,
-            "Repeat": 0
+            "Raw"     : false,
+            "Repeat"  : 0
         },
         {
-            "Convey": "We can read a holochessEntry",
-            "Zome": "holochess",
-            "FnName": "holochessEntryRead",
-            "Input": "%h%",
-            "Output": {
-                "content": "this is the entry body",
-                "timestamp": 12345
-            },
+            "Convey"  : "getHandle: My handle should be my Agent.String",
+            "Zome"    : "Holochess",
+            "FnName"  : "getHandle",
+            "Input"   : "%key%",
+            "Output"  : "%agentstr%",
             "Exposure": "public",
-            "Raw": false,
-            "Repeat": 0
-        }
+            "Raw"     : false,
+            "Repeat"  : 0
+        },
+        {
+            "Convey"  : "getMyHash",
+            "Zome"    : "Holochess",
+            "FnName"  : "getMyHash",
+            "Input"   : "",
+            "Output"  : "%key%",
+            "Exposure": "public",
+            "Raw"     : false,
+            "Repeat"  : 0
+        },
+        {
+            "Convey"  : "setHandle: Changing handle",
+            "Zome"    : "Holochess",
+            "FnName"  : "setHandle",
+            "Input"   : "toto",
+            "Output"  : "%h2%",
+            "Exposure": "public",
+            "Raw"     : false,
+            "Repeat"  : 0
+        },
+        {
+            "Convey"  : "getMyHandle: Should retrieve new handle",
+            "Zome"    : "Holochess",
+            "FnName"  : "getHandle",
+            "Input"   : "",
+            "Output"  : "toto",
+            "Exposure": "public",
+            "Raw"     : false,
+            "Repeat"  : 0
+        },
+        {
+            "Convey"  : "getHandle: Should retrieve new handle",
+            "Zome"    : "Holochess",
+            "FnName"  : "getHandle",
+            "Input"   : "%key%",
+            "Output"  : "toto",
+            "Exposure": "public",
+            "Raw"     : false,
+            "Repeat"  : 0
+        }                                            
     ],
     "Identity": "",
     "Fixtures": {
