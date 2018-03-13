@@ -1,0 +1,30 @@
+{
+  "Identity": "alex",
+  "Fixtures": {
+    "Agents": null
+  },  
+  "Tests": 
+  [
+    {
+      "Convey"  : "getMyHandle: My handle should be my Agent.String",
+      "Zome"    : "Holochess",
+      "FnName"  : "getMyHandle",
+      "Input"   : "",
+      "Output"  : "%agentstr%",
+      "Exposure": "public",
+      "Raw"     : false,
+      "Repeat"  : 0
+    },
+    {
+      "Time"  : 5000,
+      "Convey": "get opponent's handle",
+      "Zome"  : "Holochess",
+      "FnName": "getAllHandles",
+      "Input" : "",
+      "Output": [{"Entry":"%agentstr%","Hash":"%key%"}, {"Entry":"%challengee_str%","Hash":"%challengee_key%"}],
+      "Exposure": "public",
+      "Err"     : "",
+      "Regexp"  : ""
+    }
+  ]
+}
