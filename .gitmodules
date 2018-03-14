@@ -1,3 +1,6 @@
 [submodule "ui/dep/chessboardjs"]
 	path = ui/dep/chessboardjs
 	url = https://github.com/oakmac/chessboardjs
+[submodule "dep/chess.js"]
+	path = dep/chess.js
+	url = https://github.com/jhlywa/chess.js
