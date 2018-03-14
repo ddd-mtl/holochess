@@ -1,0 +1,3 @@
+[submodule "ui/dep/chessboardjs"]
+	path = ui/dep/chessboardjs
+	url = https://github.com/oakmac/chessboardjs
