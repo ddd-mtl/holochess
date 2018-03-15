@@ -16,7 +16,7 @@ FIXME
 1. Challenge an Opponent
 
 Send a challenge request to an opponent. Fields:
- - Challenger: Hash of challenger (can only be self)
+ - Timestamp: Time where challenge has been made
  - Opponent: Hash of opponent
  - ChallengerPlaysWhite: Boolean - self-explanatory
  - isGamePublic: Boolean - if true, challenge and moves are published in the dht, otherwise each entries are local to players sources chains only.
@@ -57,16 +57,16 @@ Move: Chess move
 ## Links
 
 handle_links:
-  - Links handle to agent, tag: "handle"
+  - Binds handle to agent, tag: "handle"
 challenge_links: 
-  - Links challenge to challenger, tag: "challengeInitiated"
-  - Links challenge to opponent, tag: "challengeReceived"
+  - Binds challenge to challenger, tag: "challenger"
+  - Binds challenge to opponent, tag: "challengee"
 
 move_links:
- - Links move to challenge, tag: "halfmove"
+ - Binds move to challenge, tag: "halfmove"
 
 directory_links: 
-  - Links agent to App ("directory" anchor), tag: "player"
+  - Binds agent to App ("directory" anchor), tag: "player"
 
 ## Anchors
 FIXME

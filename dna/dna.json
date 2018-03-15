@@ -1,139 +1,168 @@
 {
-    "Version": 1,
-    "UUID": "bc2d7425-1068-46b6-8a44-13ed4d413302",
-    "Name": "Holochess",
-    "Properties": {
-        "description": "P2P chess game",
-        "language": "en"
-    },
-    "PropertiesSchemaFile": "properties_schema.json",
-    "RequiresVersion": 18,
-    "DHTConfig": {
-        "HashType": "sha2-256"
-    },
-    "Zomes": [
-        {
-            "Name": "Holochess",
-            "Description": "Main Holochess zome",
-            "CodeFile": "holochessZome.js",
-            "Entries": [
-                {
-                    "Name": "handle",
-                    "DataFormat": "string",
-                    "Sharing": "public"
-                },                
-                {
-                    "Name": "move",
-                    "DataFormat": "json",
-                    "SchemaFile": "move.json",
-                    "Sharing": "public"
-                },
-                {
-                    "Name": "challenge",
-                    "DataFormat": "json",
-                    "SchemaFile": "challenge.json",
-                    "Sharing": "public"
-                },
-                {
-                    "Name": "game_result",
-                    "DataFormat": "json",
-                    "SchemaFile": "game_result.json",
-                    "Sharing": "public"
-                },
-                {
-                    "Name": "challenge_links",
-                    "DataFormat": "links"
-                },
-                {
-                    "Name": "handle_links",
-                    "DataFormat": "links"
-                },
-                {
-                    "Name": "move_links",
-                    "DataFormat": "links"
-                },                
-                {
-                    "Name": "directory_links",
-                    "DataFormat": "links"
-                },                                
-                {
-                    "Name": "history_link_base",
-                    "DataFormat": "string",
-                    "Sharing": "public"
-                },
-                {
-                    "Name": "history_links",
-                    "DataFormat": "links"
-                }                
-            ],
-            "RibosomeType": "js",
-            "Functions": [
-                {
-                    "Name": "getMyHash",
-                    "CallingType": "string",
-                    "Exposure":"public"
-                },
-                {
-                    "Name": "setHandle",
-                    "CallingType": "string",
-                    "Exposure":"public"
-                },
-                {
-                    "Name": "getAllHandles",
-                    "CallingType": "json",
-                    "Exposure":"public"
-                },
-                {
-                    "Name": "getAllAgents",
-                    "CallingType": "json",
-                    "Exposure":"public"
-                },                
-                {
-                    "Name": "getHandle",
-                    "CallingType": "string",
-                    "Exposure":"public"
-                },
-                {
-                    "Name": "getMyHandle",
-                    "CallingType": "string",
-                    "Exposure":"public"
-                },             
-                {
-                    "Name": "getAgent",
-                    "CallingType": "string",
-                    "Exposure":"public"
-                },                
-                {
-                    "Name": "commitChallenge",
-                    "CallingType": "json",
-                    "Exposure": "public"
-                },
-                {
-                    "Name": "getChallenge",
-                    "CallingType": "json",
-                    "Exposure": "public"
-                },                                              
-                {
-                    "Name": "getMyGames",
-                    "CallingType": "json",
-                    "Exposure":"public"
-                },
-                {
-                    "Name": "commitMove",
-                    "CallingType": "json",
-                    "Exposure": "public"
-                },                
-                {
-                    "Name": "getMoves",
-                    "CallingType": "json",
-                    "Exposure":"public"
-                },                
-                {
-                    "Name": "getGameHistory",
-                    "CallingType": "json",
-                    "Exposure":"public"
-                }                
-            ]
-        }
-    ]
+  "Version": 1,
+  "UUID": "bc2d7425-1068-46b6-8a44-13ed4d413302",
+  "Name": "Holochess",
+  "Properties": {
+    "description": "P2P chess game",
+    "language": "en"
+  },
+  "PropertiesSchemaFile": "properties_schema.json",
+  "RequiresVersion": 18,
+  "DHTConfig": {
+    "HashType": "sha2-256"
+  },
+  "Zomes": [
+    {
+      "Name": "Holochess",
+      "Description": "Main Holochess zome",
+      "CodeFile": "holochessZome.js",
+      "RibosomeType": "js",      
+      "Entries": [
+          {
+            "Name": "handle",
+            "Comment": "Agent's self set name (non unique)",
+            "DataFormat": "string",
+            "Sharing": "public"
+          },
+          {
+            "Name": "challenge",
+            "Comment": "Chess game initiation entry",
+            "DataFormat": "json",
+            "SchemaFile": "challenge.json",
+            "Sharing": "public"
+          },                                
+          {
+              "Name": "move",
+              "Comment": "Chess half-move entry for a specific game",
+              "DataFormat": "json",
+              "SchemaFile": "move.json",
+              "Sharing": "public"
+          },
+          {
+              "Name": "game_result",
+              "Comment": "NOT USED YET - Chess game closing entry",
+              "DataFormat": "json",
+              "SchemaFile": "game_result.json",
+              "Sharing": "public"
+          },
+          {
+              "Name": "handle_links",
+              "Comment": "Bind Handle to Agent",
+              "Tags": "handle",              
+              "DataFormat": "links"
+          },
+          {
+            "Name": "challenge_links",
+            "Comment": "Bind Challenge to Agent",
+            "Tags": "challenger, challengee",
+            "DataFormat": "links"
+          },          
+          {
+              "Name": "move_links",
+              "Comment": "Bind Move to Challenge",
+              "Tags": "halfmove",
+              "DataFormat": "links"
+          },                
+          {
+              "Name": "directory_links",
+              "Comment": "Bind Agent to App",
+              "Tags": "player",
+              "DataFormat": "links"
+          },                                
+          {
+              "Name": "history_link_base",
+              "Comment": "NOT USED YET",
+              "Tags": "",
+              "DataFormat": "string",
+              "Sharing": "public"
+          },
+          {
+              "Name": "history_links",
+              "Comment": "NOT USED YET",
+              "Tags": "",
+              "DataFormat": "links"
+          }                
+      ],
+      "Functions": [
+          {
+            "Name": "getMyHash",
+            "Comment": "Get local Agent's hashkey",
+            "CallingType": "string",
+            "Exposure":"public"
+          },
+          {
+            "Name": "getAgent",
+            "Comment": "NOT IMPLEMENTED - Get Agent entry from Handle",
+            "CallingType": "string",
+            "Exposure":"public"
+          },      		  
+          {
+            "Name": "getAllPlayers",
+            "Comment": "Get all known Players",
+            "CallingType": "json",
+            "Exposure":"public"
+          },
+		     {
+            "Name": "getHandle",
+            "Comment": "Get Handle of an Agent",
+            "CallingType": "string",
+            "Exposure":"public"
+          },
+          {
+            "Name": "getMyHandle",
+            "Comment": "Get local Agent's hashkey",
+            "CallingType": "string",
+            "Exposure":"public"
+          },  
+          {
+            "Name": "setMyHandle",
+            "Comment": "NOT IMPLEMENTED - Commit local Agent's Handle Entry",
+            "CallingType": "string",
+            "Exposure":"public"
+          },
+          {
+            "Name": "getAllHandles",
+            "Comment": "Get all known Players latest Handle",
+            "CallingType": "json",
+            "Exposure":"public"
+          },                                    
+          {
+            "Name": "commitChallenge",
+            "Comment": "Commit Challenge Entry",
+            "CallingType": "json",
+            "Exposure": "public"
+          },
+          {
+            "Name": "getChallenge",
+            "Comment": "Get Challenge entry from hashkey",
+            "CallingType": "json",
+            "Exposure": "public"
+          },                                              
+          {
+            "Name": "getMyGames",
+            "Comment": "Get all local Agent's Challenges",
+            "CallingType": "json",
+            "Exposure":"public"
+          },
+          {
+            "Name": "commitMove",
+            "Comment": "Commit Move Entry",
+            "CallingType": "json",
+            "Exposure": "public"
+          },                
+          {
+            "Name": "getMoves",
+            "Comment": "Get all Moves of a Challenge",
+            "CallingType": "json",
+            "Exposure":"public"
+          },                
+          {
+            "Name": "getGameHistory",
+            "Comment": "NOT IMPLEMENTED",
+            "CallingType": "json",
+            "Exposure":"public"
+          }                
+      ]
+    }
+  ]
 }

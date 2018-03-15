@@ -3,13 +3,16 @@
   "type": "object",
   "properties": {
     "gameHash": {
-      "type": "string"
+      "type": "string",
+      "comment": "Hashkey of challenge it is part of (may be removed in future)"
     },
     "san": {
-      "type": "string"
+      "type": "string",
+      "comment": "Chess half-move encoded in SAN notation"
     },
     "index": {
-      "type": "integer"
+      "type": "integer",
+      "comment": "Index position of Move in game (may be removed in future)"
     }
   },
   "required": ["gameHash","san", "index"]

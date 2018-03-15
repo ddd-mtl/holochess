@@ -3,17 +3,27 @@
   "type": "object",
   "properties": {
 		"challenger": {
-			"type": "string"
-    },
+			"type": "string",
+      "comment": "Hashkey of Agent who initiated the challenger.",
+      "constraints": "Must be self (Source)."
+		},      
 		"opponent": {
-			"type": "string"
-		},        
+			"type": "string",
+      "comment": "Hashkey of Agent who receives the challenge.",
+      "constraints": "Must be an Agent Hashkey different from Challenger (Source)."
+    },
+    "timestamp": {
+      "type": "integer",
+      "comment": "Might be removed in the future by entry-header's timestamp."
+    },            
     "challengerPlaysWhite": {
-        "type": "boolean"
+        "type": "boolean",
+        "comment": "If TRUE Challenger will play as White."
     },
     "isGamePublic": {
-      "type": "boolean"
+      "type": "boolean",
+      "comment": "If TRUE the game's Moves will be published on the DHT, otherwise will only be on each player's source chains."
     }    
   },
-  "required": ["challenger", "opponent"]
+  "required": ["challenger", "opponent", "timestamp"]
 }

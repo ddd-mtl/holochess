@@ -160,7 +160,7 @@ function hc_commitChallenge(opponent)
     return;
   }
   ajax_send("commitChallenge", 
-            JSON.stringify({ opponent: opponent, challengerPlaysWhite: true, isGamePublic: true }),  // FIXME: change constants to variables
+            JSON.stringify({ timestamp: new Date().valueOf(), opponent: opponent, challengerPlaysWhite: true, isGamePublic: true }),  // FIXME: change constants to variables
             function(json)
             {
               console.log("Challenge Hashkey: " + json);

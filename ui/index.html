@@ -15,7 +15,7 @@
 <body>
   <!-- One Row Bootstrap Grid -->
   <div class="container">
-    <div class="row">
+    <div id="body-row" class="row">
             
       <!-- Players panel -->
       <div class="col-md-3 players">
@@ -46,9 +46,7 @@
             My Games
             <div class="row" id="load-game-button-row">
                 <button id="get-games-button" type="button" class="btn btn-primary">Get my games</button>          
-
                 <button id="load-game-button" type="button" class="btn btn-primary">Load game</button>
-                <input type="button" id="sandbox-button" value="Sandbox" />
               </div> 
             </div>                        
           <div class="panel-body">                 
@@ -61,7 +59,12 @@
       <!-- Move log panel -->
       <div class="col-md-3">
         <div id="log" class="panel panel-default">    
-            <div class="panel-heading" id="log-title">Move log</div>
+            <div class="panel-heading" id="log-title">Move log
+              <div class="row">
+                <button type="button" id="sandbox-button" class="btn btn-primary">Sandbox</button>
+                <button type="button" id="reset-button" class="btn btn-primary">Clear</button>
+              </div>
+            </div>
             <div class="panel-body">
               <table id="logtable"></table>
             </div>
@@ -76,10 +79,9 @@
               <div id="myBoard"></div>
               <p><span id="turn-color"></span> turn</p>
               <p>Status: <span id="status"></span></p>
-              <p>Opponent: <span id="playerid"></span></p>
-              <input type="button" id="reset-button" value="Reset" />
-              <input type="button" id="undo-button" value="Undo" />
-              <input type="button" id="submit-button" value="Submit" />  
+              <p>Opponent: <span id="playerid"></span></p>              
+              <button type="button" id="undo-button" class="btn btn-primary">Undo</button>
+              <button type="button" id="submit-button" class="btn btn-primary">Submit</button>
               <!-- <input type="button" id="startBtn" value="Auto-submit" /> -->
             </div>
           </div>

@@ -53,7 +53,7 @@ function getMyHash()
 function commitNewHandle(handle)
 {
   // get all agent's previous handles
-  var handles = getNonloadedLinks(ME, "handle");
+  var handles = getHashsFromLinks(ME, "handle");
 
   var n = handles.length - 1;
   if (n < 0)
@@ -95,7 +95,7 @@ function getAllHandles()
   // {
   //     return undefined;
   // }
-  var linkArray = getLoadedLinks(APP_ID, "player", SOURCE_AS_HASH);
+  var linkArray = getEntriesFromLinks(APP_ID, "player", SOURCE_AS_HASH);
   return (linkArray? linkArray : []);
 }
 
@@ -119,7 +119,7 @@ function getHandle(agentHashkey)
 {
   debug("getHandle: " + agentHashkey);
   // FIXME : check valid agentHashkey?
-  var linkArray = getLoadedLinks(agentHashkey, "handle");
+  var linkArray = getEntriesFromLinks(agentHashkey, "handle");
   if(!linkArray || linkArray.length != 1)
   {
     return [];
@@ -131,13 +131,13 @@ function getHandle(agentHashkey)
 /**
  *  return array of user keys to handles
  */ 
-function getAllAgents() 
+function getAllPlayers() 
 {
   // if (property("enableDirectoryAccess") != "true") 
   // {
   //     return undefined;
   // }
-  return getLoadedLinks(APP_ID, "player", SOURCE_AS_HASH);
+  return getEntriesFromLinks(APP_ID, "player", SOURCE_AS_HASH);
 }
 
 
@@ -155,22 +155,16 @@ function commitChallenge(challenge)
   }
   debug("commitChallenge jsonMsg: "+ JSON.stringify(challenge));
 
-  // Build and commit challenge entry to my source chain
-  var challenge =
-  {
-    challenger          : ME,
-    opponent            : challenge.opponent,
-    challengerPlaysWhite: challenge.challengerPlaysWhite,
-    isGamePublic        : challenge.isGamePublic
-  };
+  challenge.challenger = ME;
   
+  // commit challenge entry to my source chain
   var challengeHashkey = commit('challenge', challenge);
 
   debug("new challenge: "+ challengeHashkey + "\n\t challenger: " + ME + "\n\t opponent  :" + challenge.opponent);
 
   // On the DHT, put a link on my hashkey, and my opponents hashkey, to the new challenge.
-  commit("challenge_links", {Links:[{Base:ME,Link:challengeHashkey,Tag:"challengeInitiated"}]});
-  commit("challenge_links", {Links:[{Base:challenge.opponent,Link:challengeHashkey,Tag:"challengeReceived"}]});
+  commit("challenge_links", {Links:[{Base:ME,Link:challengeHashkey,Tag:"challenger"}]});
+  commit("challenge_links", {Links:[{Base:challenge.opponent,Link:challengeHashkey,Tag:"challengee"}]});
   return challengeHashkey;
 }
 
@@ -201,7 +195,7 @@ function commitMove(move)
 function getMoves(gameHashkey)
 {
   // getLinks from DHT
-  var moves = getLoadedLinks(gameHashkey, "halfmove");
+  var moves = getEntriesFromLinks(gameHashkey, "halfmove");
   debug("getMoves of game: " + gameHashkey + "\n\t moves found: " + moves.length);
 
   // Sort by move index
@@ -227,7 +221,7 @@ function getChallenge(entryHashkey)
 {
   debug("getChallenge called: " + entryHashkey);  
   var challenge = get(entryHashkey);
-  //debug(challenge);
+  debug("Challenge: " + challenge);
   return JSON.parse(challenge);
   //return challenge;
 }
@@ -241,11 +235,11 @@ function getMyGames()
 {
   debug("getMyGames:");
   // getLinks from DHT
-  var challengeInitiatedLinks = getNonloadedLinks(ME, "challengeInitiated");
-  var challengeReceivedLinks = getNonloadedLinks(ME, "challengeReceived");
-  debug("\t Initiated: " + challengeInitiatedLinks.length + "  received: " + challengeReceivedLinks.length);
+  var challengerLinks = getHashsFromLinks(ME, "challenger");
+  var challengeeLinks = getHashsFromLinks(ME, "challengee");
+  debug("\t Initiated: " + challengerLinks.length + "  received: " + challengeeLinks.length);
   
-  var challengeLinks = challengeInitiatedLinks.concat(challengeReceivedLinks);
+  var challengeLinks = challengerLinks.concat(challengeeLinks);
   return challengeLinks;
 }
 
@@ -282,25 +276,29 @@ function hasErrorOccurred(result)
  * Helper for the "getLinks" with Load call. 
  * Handle the no-link error case. 
  * Copy the returned entry values into a nicer array
+ " @param canSourceBeHash if TRUE attribute Hash will be hash of the Source
  */
-function getLoadedLinks(base, tag, canSourceBeHash) 
+function getEntriesFromLinks(base, tag, canSourceBeHash) 
 {
-  debug("getLoadedLinks: " + base + " | tag : " + tag + " | " + canSourceBeHash);   
+  debug("getEntriesFromLinks: " + base + " | tag : " + tag + " | " + canSourceBeHash);   
   // Get the tag from the base in the DHT
   var links = getLinks(base, tag, {Load:true});
 
   // Handle error
   if (hasErrorOccurred(links)) 
   {
-    debug("getLoadedLinks failed: " + base + " | tag : " + tag);    
+    debug("getEntriesFromLinks failed: " + base + " | tag : " + tag);    
     return [];
   }
+
+  // return links;
 
   // Build smaller array with just Hash and Entry value
   var miniLinkArray = [];
   for (var i = 0; i < links.length; i++) 
   {
       var link     = links[i];
+      // debug("\n" + JSON.stringify(link));
       var miniLink = (typeof canSourceBeHash !== 'undefined'? {Hash:link.Source, Entry: link.Entry} : {Hash:link.Hash, Entry: link.Entry});
       miniLinkArray.push(miniLink);
   }
@@ -314,13 +312,13 @@ function getLoadedLinks(base, tag, canSourceBeHash)
  * Handle the no links entry error
  * Build a simpler links array
  */
-function getNonloadedLinks(base, tag) 
+function getHashsFromLinks(base, tag) 
 {
   // Get the tag from the base in the DHT
   var links = getLinks(base, tag, {Load:false});
   if (hasErrorOccurred(links)) 
   {
-    debug("getNonloadedLinks failed: " + base + " | tag : " + tag);    
+    debug("getHashsFromLinks failed: " + base + " | tag : " + tag);    
     return [];
   }
   // debug("Links:" + JSON.stringify(links));
@@ -360,19 +358,21 @@ function genesis()
 
 /**
  * Validate Challenge Entry
- * Challenger and Opponent must be different
  * @return {boolean} success
  */
 function validateChallenge(entry, header, pkg, sources)
 {
+  // FIXME challenger equals Source
+  
+  // Opponent MUST be different from challenger
   if(entry.challenger === entry.opponent)
   {
     debug("Challenge not valid because challenger and opponent are same.");
     return false;
   }
 
-  // FIXME check challenger is valid Agent Hash
-  // FIXME check opponent is valid Agent Hash
+  // FIXME opponent is valid Agent Hash
+
   ////return validate('challenge', entry, header, pkg, sources);
   
   return true;
