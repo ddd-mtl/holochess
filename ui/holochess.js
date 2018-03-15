@@ -47,6 +47,8 @@ var activeChallengeHashkey;
 var activeChallengeEntry;
 var activeOpponentHandle;
 
+var myGames;
+
 // utils
 // ========================================================================
 
@@ -370,6 +372,8 @@ var updateStatus = function()
     activeChallengeEntry   = null;
     activeOpponentHandle   = null;
 
+    myGames = [];
+
     game.reset();
     board.clear();
     board.orientation('white');
@@ -507,7 +511,7 @@ $('#get-handles-button').on('click', function()
 
 $('#get-games-button').on('click', function() 
 {        
-  hc_getMyGames(makeMyGamesUl);
+  hc_getMyGames(getMyGamesCallback);
 });
 
 
@@ -677,7 +681,7 @@ var loadGameCallback = function(sanArray)
                                 });
                   }); 
 
-  GameTitleEl.html(g_loadedChallengeHashkey);
+  // GameTitleEl.html(g_loadedChallengeHashkey);
   $('#reset-button').prop("disabled", false);  
   updateStatus();
   updateTurnColor();  
@@ -687,7 +691,56 @@ var loadGameCallback = function(sanArray)
 
 /**
  * 
- * @param {array of challenge hashkeys} gameArray 
+ * @param {*} gameArray 
+ */
+var getMyGamesCallback = function(gameArray)
+{
+  if(!gameArray || gameArray == undefined)
+  {
+    return;
+  }  
+  
+  myGames = gameArray;  
+
+  // Get Handles and store them in games array
+  for (let i = 0; i < gameArray.length; i++)
+  {
+    hc_getHandle( gameArray[i].Entry.challenger, 
+                  function(handle)
+                  {
+                    console.log("\t getMyGamesCallback::hc_getHandle challenger = " + handle);
+                    myGames[i].challengerHandle = handle;                              
+                  });
+    hc_getHandle( gameArray[i].Entry.opponent, 
+                  function(handle)
+                  {
+                    console.log("\t getMyGamesCallback::hc_getHandle opponent = " + handle);
+                    myGames[i].opponentHandle = handle;        
+                  });   
+  }
+
+  // Periodically update game names
+  //makeMyGamesUl(myGames);
+  setInterval(function()
+  {
+    // Generate Game names
+    // "<whitePlayerHandle> vs. <blackplayerHandle> -- <timestamp>"
+    myGames.forEach(function(game)
+    {
+      const whiteHandle = (game.Entry.challengerPlaysWhite? game.challengerHandle : game.opponentHandle);
+      const blackHandle = (game.Entry.challengerPlaysWhite? game.opponentHandle : game.challengerHandle);
+      game.name = whiteHandle + " vs. " + blackHandle + " -- " + game.Entry.timestamp;
+    });
+
+    // Generate myGames UL
+    makeMyGamesUl(myGames);
+  }
+  , 5000);
+}
+
+/**
+ * 
+ * @param {array of game} gameArray 
  */
 var makeMyGamesUl = function(gameArray)
 {
@@ -698,11 +751,10 @@ var makeMyGamesUl = function(gameArray)
   $("#my-games").empty();
   for (let i = 0; i < gameArray.length; i++)
   {
-    var gameHashkey = gameArray[i];
     $("#my-games").append(
-        "<li data-id=\"" + gameHashkey + "\""
-        + "data-name=\"" + gameHashkey + "\">"
-        + gameHashkey
+        "<li data-id=\"" + gameArray[i].Hash + "\""
+        + "data-name=\"" + gameArray[i].Hash + "\">"
+        + gameArray[i].name
         + "</li>");
   }
 }

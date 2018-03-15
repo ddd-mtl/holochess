@@ -183,6 +183,7 @@ function hc_getMyGames(callbackFn)
             undefined, 
             function(json) 
             {
+              console.log("hc_getMyGames response:\n" + json + "\n");
               callbackFn(JSON.parse(json));
             });
 }

@@ -4,7 +4,7 @@
 
 
 body {
-  background-color: #8e5757;
+  background-color: #866e6e;
 }
 
 .btn-primary {
@@ -66,11 +66,6 @@ tr:nth-child(even) {
 	background-color: #dddddd;
 }
 
-
-#heading {
-  text-align: center;
-}
-
 .players {
   /* width: 300px; */
 }
@@ -82,12 +77,15 @@ tr:nth-child(even) {
   padding-right:10px;
 }
 
-#player-name-input, #player-name-button {
-  /*width: 100%;*/
+.header-buttons {
+  /*float: right;*/
+  margin-top:5px;
+  margin-left: -3px;
 }
 
-#challenge-button-row {
-  /*text-align: center;*/
+.footer-buttons {
+  text-align: right;
+  margin-right: -5px;
 }
 
 #my-games {
@@ -107,11 +105,12 @@ tr:nth-child(even) {
   font-weight:bold;
 }
 
-#handle_block {
-  /*margin-bottom:15px;*/
-}
-
 input[type="button"]:disabled {
   opacity: 0.65; 
   cursor: not-allowed;
+}
+
+#log {  
+  overflow: auto;
+  max-height: 300px; 
 }

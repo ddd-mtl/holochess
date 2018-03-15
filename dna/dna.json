@@ -54,7 +54,7 @@
           {
             "Name": "challenge_links",
             "Comment": "Bind Challenge to Agent",
-            "Tags": "challenger, challengee",
+            "Tags": "initiated, received",
             "DataFormat": "links"
           },          
           {

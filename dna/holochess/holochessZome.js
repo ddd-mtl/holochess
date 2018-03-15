@@ -53,7 +53,7 @@ function getMyHash()
 function commitNewHandle(handle)
 {
   // get all agent's previous handles
-  var handles = getHashsFromLinks(ME, "handle");
+  var handles = getHashkeysFromLinks(ME, "handle");
 
   var n = handles.length - 1;
   if (n < 0)
@@ -153,9 +153,9 @@ function commitChallenge(challenge)
   {
     return null;
   }
-  debug("commitChallenge jsonMsg: "+ JSON.stringify(challenge));
-
   challenge.challenger = ME;
+  
+  debug("commitChallenge jsonMsg: "+ JSON.stringify(challenge));
   
   // commit challenge entry to my source chain
   var challengeHashkey = commit('challenge', challenge);
@@ -163,8 +163,8 @@ function commitChallenge(challenge)
   debug("new challenge: "+ challengeHashkey + "\n\t challenger: " + ME + "\n\t opponent  :" + challenge.opponent);
 
   // On the DHT, put a link on my hashkey, and my opponents hashkey, to the new challenge.
-  commit("challenge_links", {Links:[{Base:ME,Link:challengeHashkey,Tag:"challenger"}]});
-  commit("challenge_links", {Links:[{Base:challenge.opponent,Link:challengeHashkey,Tag:"challengee"}]});
+  commit("challenge_links", {Links:[{Base:ME,Link:challengeHashkey,Tag:"initiated"}]});
+  commit("challenge_links", {Links:[{Base:challenge.opponent,Link:challengeHashkey,Tag:"received"}]});
   return challengeHashkey;
 }
 
@@ -228,19 +228,19 @@ function getChallenge(entryHashkey)
 
 
 /**
- *  return list of hash of games that corresponds to query
+ *  return array of entries of challenges that corresponds to query parameters
  */ 
 //// function getGamesBy(stateMask, challenger, opponent)
 function getMyGames()
 {
   debug("getMyGames:");
   // getLinks from DHT
-  var challengerLinks = getHashsFromLinks(ME, "challenger");
-  var challengeeLinks = getHashsFromLinks(ME, "challengee");
-  debug("\t Initiated: " + challengerLinks.length + "  received: " + challengeeLinks.length);
+  var initiatedChallenges = getEntriesFromLinks(ME, "initiated");
+  var receivedChallenges = getEntriesFromLinks(ME, "received");
+  debug("\t Initiated: " + initiatedChallenges.length + "  received: " + receivedChallenges.length);
   
-  var challengeLinks = challengerLinks.concat(challengeeLinks);
-  return challengeLinks;
+  var myGames = initiatedChallenges.concat(receivedChallenges);
+  return myGames;
 }
 
 
@@ -312,7 +312,7 @@ function getEntriesFromLinks(base, tag, canSourceBeHash)
  * Handle the no links entry error
  * Build a simpler links array
  */
-function getHashsFromLinks(base, tag) 
+function getHashkeysFromLinks(base, tag) 
 {
   // Get the tag from the base in the DHT
   var links = getLinks(base, tag, {Load:false});

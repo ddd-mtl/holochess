@@ -59,8 +59,8 @@ Move: Chess move
 handle_links:
   - Binds handle to agent, tag: "handle"
 challenge_links: 
-  - Binds challenge to challenger, tag: "challenger"
-  - Binds challenge to opponent, tag: "challengee"
+  - Binds challenge to challenger, tag: "initiated"
+  - Binds challenge to opponent, tag: "received"
 
 move_links:
  - Binds move to challenge, tag: "halfmove"

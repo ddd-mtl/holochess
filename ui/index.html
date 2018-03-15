@@ -27,14 +27,18 @@
         <div class="panel panel-default">
           <div class="panel-heading">
             Players <span id="my-handle"></span>
-            <div class="row" id="challenge-button-row">
-                <button id="get-handles-button" type="button" class="btn btn-primary">Get Players</button>          
-                <button id="challenge-button" type="button" class="btn btn-primary">Challenge Player!</button>
+            <div class="header-buttons">
+                <button id="get-handles-button" type="button" class="btn btn-primary">Get Players</button>
               </div>
           </div>
           <div class="panel-body">
             <ul id="players">
             </ul>
+          </div>
+          <div class="panel-footer">            
+            <div class="row footer-buttons">        
+              <button id="challenge-button" type="button" class="btn btn-primary">Challenge Player!</button>
+            </div>
           </div>
         </div>
       </div>
@@ -44,50 +48,54 @@
         <div class="panel panel-default">
           <div id="my-games-header" class="panel-heading">
             My Games
-            <div class="row" id="load-game-button-row">
+            <div class="header-buttons">
                 <button id="get-games-button" type="button" class="btn btn-primary">Get my games</button>          
-                <button id="load-game-button" type="button" class="btn btn-primary">Load game</button>
               </div> 
             </div>                        
           <div class="panel-body">                 
             <ul id="my-games">
             </ul>
           </div>
+          <div class="panel-footer">            
+            <div class="row footer-buttons">
+                <button id="load-game-button" type="button" class="btn btn-primary">Load game</button>              
+            </div>
+          </div>                        
         </div>
       </div> 
-        
-      <!-- Move log panel -->
-      <div class="col-md-3">
-        <div id="log" class="panel panel-default">    
-            <div class="panel-heading" id="log-title">Move log
-              <div class="row">
-                <button type="button" id="sandbox-button" class="btn btn-primary">Sandbox</button>
-                <button type="button" id="reset-button" class="btn btn-primary">Clear</button>
-              </div>
+              
+      <!-- Game panel --> 
+      <div class="col-md-6">
+        <div class="row panel panel-default">  
+          <div class="panel-heading"><span id="active-game"></span>
+            <div class="row header-buttons">
+              <button type="button" id="sandbox-button" class="btn btn-primary">Sandbox</button>
+              <button type="button" id="reset-button" class="btn btn-primary">Clear</button>
             </div>
-            <div class="panel-body">
+          </div>   
+          <div class="panel-body">
+            <!-- Board -->      
+            <div class="col-md-6">      
+                <div id="myBoard"></div>
+                <p><span id="turn-color"></span> turn</p>
+                <p>Status: <span id="status"></span></p>
+                <p>Opponent: <span id="playerid"></span></p>  
+              </div>            
+            <!-- Move log -->
+            <div class="col-md-6" id="log">   
               <table id="logtable"></table>
             </div>
-        </div>
-      </div>
-
-      <!-- Board panel -->      
-      <div class="col-md-3">
-          <div class="panel panel-default">
-            <div class="panel-heading" id="log-title"><span id="active-game"></span></div>
-            <div class="panel-body">
-              <div id="myBoard"></div>
-              <p><span id="turn-color"></span> turn</p>
-              <p>Status: <span id="status"></span></p>
-              <p>Opponent: <span id="playerid"></span></p>              
+          </div>
+          <div class="panel-footer">    
+            <div class="row footer-buttons">        
               <button type="button" id="undo-button" class="btn btn-primary">Undo</button>
               <button type="button" id="submit-button" class="btn btn-primary">Submit</button>
-              <!-- <input type="button" id="startBtn" value="Auto-submit" /> -->
-            </div>
-          </div>
+            </div> 
+          </div>          
         </div>
+      </div> 
 
-    </div> <!-- row -->
+    </div>
   </div>  
  
 
