@@ -48,6 +48,8 @@ var activeChallengeEntry;
 var activeOpponentHandle;
 
 var myGames;
+var g_allHandles;   // Cache of all known Handles on the holochain DHT
+
 
 // utils
 // ========================================================================
@@ -56,6 +58,90 @@ var removeHighlights = function(color)
 {
   //console.log(boardEl.find(squareClass));
   boardEl.find(squareClass).removeClass('highlight-' + color);
+};
+
+
+/**
+ * 
+ * @param {*} value 
+ * @param {*} other 
+ */
+var isEqual = function (value, other) 
+{
+	// Get the value type
+	var type = Object.prototype.toString.call(value);
+
+	// If the two objects are not the same type, return false
+  if (type !== Object.prototype.toString.call(other))
+  {
+    return false;
+  }
+
+	// If items are not an object or array, return false
+  if (['[object Array]', '[object Object]'].indexOf(type) < 0) 
+  {
+    return false;
+  }
+
+	// Compare the length of the length of the two items
+	var valueLen = type === '[object Array]' ? value.length : Object.keys(value).length;
+	var otherLen = type === '[object Array]' ? other.length : Object.keys(other).length;
+  if (valueLen !== otherLen)
+  {
+    return false;
+  }
+
+	// Compare two items
+  var compare = function(item1, item2) 
+  {
+		// Get the object type
+		var itemType = Object.prototype.toString.call(item1);
+
+		// If an object or array, compare recursively
+    if (['[object Array]', '[object Object]'].indexOf(itemType) >= 0)
+    {
+      if (!isEqual(item1, item2)) 
+      {
+        return false;
+      }
+		}
+		// Otherwise, do a simple comparison
+    else
+    {
+			// If the two items are not the same type, return false
+      if (itemType !== Object.prototype.toString.call(item2))
+      {
+        return false;
+      }
+
+			// Else if it's a function, convert to a string and compare
+			// Otherwise, just compare
+      if (itemType === '[object Function]')
+      {
+				if (item1.toString() !== item2.toString()) return false;
+			} else {
+				if (item1 !== item2) return false;
+			}
+		}
+	};
+
+	// Compare properties
+  if (type === '[object Array]')
+  {
+    for (var i = 0; i < valueLen; i++)
+    {
+			if (compare(value[i], other[i]) === false) return false;
+		}
+	} else {
+    for (var key in value)
+    {
+			if (value.hasOwnProperty(key)) {
+				if (compare(value[key], other[key]) === false) return false;
+			}
+		}
+	}
+	// If nothing failed, return true
+	return true;
 };
 
 
@@ -349,82 +435,6 @@ var updateStatus = function()
   };
   
 
-  /** 
-   * Set App state to APP_STATE_EMPTY
-   */      
-  var resetApp = function()
-  {
-    squareToHighlight     = null;
-    colorToHighlight      = null;
-    hasProposedMove       = false;
-    lastValidMove         = null;
-    lastSubmittedMove     = null;
-    canWhitePlay          = null;
-    iPlayWhite            = null;
-    lastSubmittedFen      = null;
-    canUndoMove           = false;
-    canSubmit             = false;
-    mustSubmitOnHolochain = true;
-    moveCount             = 0;
-
-    activeOpponentHashkey  = null;
-    activeChallengeHashkey = null;
-    activeChallengeEntry   = null;
-    activeOpponentHandle   = null;
-
-    myGames = [];
-
-    game.reset();
-    board.clear();
-    board.orientation('white');
-
-    removeHighlights('b');
-    removeHighlights('w');        
-    logEl.empty();
-    logEl.append("<tr><th>#</th><th>White</th><th>Black</th></tr>");
-    $('#submit-button').prop("disabled", true);
-    $('#undo-button').prop("disabled", true);
-    $('#reset-button').prop("disabled", true);  
-    $('#sandbox-button').prop("disabled", false);  
-
-    $('#load-game-button').prop("disabled", true); 
-    $('#challenge-button').prop("disabled", true); 
-
-    GameTitleEl.html("");
-    opponentHandleEl.html("");
-    updateStatus();
-    updateTurnColor();
-    appState = APP_STATE_EMPTY;    
-  }
-
-
-// Setup Chessboard
-// ================
-var ChessboardConfig = 
-{
-    position     : 'start',
-    showNotation : false,
-    draggable    : true,
-    moveSpeed    : 'slow',
-    snapbackSpeed: 200,
-    snapSpeed    : 100,
-    onDragStart  : board_onDragStart,
-    onDrop       : board_onDrop,
-    onSnapEnd    : board_onSnapEnd,
-    onMouseoutSquare: board_onMouseoutSquare,
-    onMouseoverSquare: board_onMouseoverSquare,        
-    // onMoveEnd    : board_onMoveEnd // not called because there are no animations
-};
-
-var board = Chessboard('#myBoard', ChessboardConfig);
-// Setup chess engine
-var game = new Chess();
-
-// var board = Chessboard('#myBoard2', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R')
-// var board = Chessboard('#myBoard', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R')
-
-console.log("holochess.js");
-resetApp();
 
 // Buttons Behavior
 // ========================================================================
@@ -502,17 +512,32 @@ $("#challenge-button").on("click", function()
 });    
 
 
-$('#get-handles-button').on('click', function() 
+/**
+ * Update Handles list
+ */
+var getAllHandles = function()
 {
-  hc_getAllHandles(updateOpponentList);
-  myHandleEl.html("(" + g_myHandle + ")");
-});
+  hcp_getAllHandles().then(function(allHandles)
+  {
+    updateOpponentList(allHandles);
+  });  
+}
 
 
-$('#get-games-button').on('click', function() 
-{        
-  hc_getMyGames(getMyGamesCallback);
-});
+/**
+ * Update Games list
+ */
+var getMyGames = function()
+{
+  return hcp_getMyGames().then(function()
+    {  
+      makeMyGamesUl(g_myGames);
+    })
+    .catch(function(err)
+    {
+      console.log("hcp_getMyGames failed: " + err);
+    });
+};
 
 
 // Select Opponent
@@ -557,10 +582,20 @@ var displayActiveOpponent = function()
  */
 var updateOpponentList = function(allHandles) 
 {
+  // Don't update if nothing has changed
+  if(g_allHandles == allHandles)
+  {
+    return;
+  }
+  g_allHandles = allHandles;
   $("#players").empty();
   for (var x = 0; x < allHandles.length; x++) 
   {
-      $("#players").append(makePlayerLi(allHandles[x]));
+    if(allHandles[x].Hash == g_myHash) // FIXME must get agent hash with that handle :(
+    {
+      continue;
+    }    
+    $("#players").append(makePlayerLi(allHandles[x]));
   }
   if (activeOpponentHashkey) 
   {
@@ -577,10 +612,6 @@ var makePlayerLi = function(handleLink)
 {
   // console.log("handle_object: " + handle_object.Hash);  
   // console.log("g_myHash     : " + g_myHash);  
-  if(handleLink.Hash == g_myHash) // FIXME must get agent hash with that handle :(
-  {
-    return;
-  }
   return  "<li data-id=\"" + handleLink.Hash + "\""
         + "data-name=\"" + handleLink.Entry + "\">"
         + handleLink.Entry
@@ -629,6 +660,7 @@ var loadGameCallback = function(sanArray)
   // First set app state to APP_STATE_EMPTY 
   resetApp();
   canWhitePlay = true;
+  
   // Go through all the moves
   for(let i = 0; i < sanArray.length; i++)
   {
@@ -691,72 +723,36 @@ var loadGameCallback = function(sanArray)
 
 /**
  * 
- * @param {*} gameArray 
- */
-var getMyGamesCallback = function(gameArray)
-{
-  if(!gameArray || gameArray == undefined)
-  {
-    return;
-  }  
-  
-  myGames = gameArray;  
-
-  // Get Handles and store them in games array
-  for (let i = 0; i < gameArray.length; i++)
-  {
-    hc_getHandle( gameArray[i].Entry.challenger, 
-                  function(handle)
-                  {
-                    console.log("\t getMyGamesCallback::hc_getHandle challenger = " + handle);
-                    myGames[i].challengerHandle = handle;                              
-                  });
-    hc_getHandle( gameArray[i].Entry.opponent, 
-                  function(handle)
-                  {
-                    console.log("\t getMyGamesCallback::hc_getHandle opponent = " + handle);
-                    myGames[i].opponentHandle = handle;        
-                  });   
-  }
-
-  // Periodically update game names
-  //makeMyGamesUl(myGames);
-  setInterval(function()
-  {
-    // Generate Game names
-    // "<whitePlayerHandle> vs. <blackplayerHandle> -- <timestamp>"
-    myGames.forEach(function(game)
-    {
-      const whiteHandle = (game.Entry.challengerPlaysWhite? game.challengerHandle : game.opponentHandle);
-      const blackHandle = (game.Entry.challengerPlaysWhite? game.opponentHandle : game.challengerHandle);
-      game.name = whiteHandle + " vs. " + blackHandle + " -- " + game.Entry.timestamp;
-    });
-
-    // Generate myGames UL
-    makeMyGamesUl(myGames);
-  }
-  , 5000);
-}
-
-/**
- * 
  * @param {array of game} gameArray 
  */
 var makeMyGamesUl = function(gameArray)
 {
-  if(!gameArray || gameArray == undefined)
+  // pre-conditions
+  if(!gameArray || gameArray === undefined || isEqual(myGames, gameArray))
   {
     return;
   }
+
+  myGames = gameArray;
+
   $("#my-games").empty();
-  for (let i = 0; i < gameArray.length; i++)
+
+  // edge case: No games
+  if(gameArray.length == 0)
+  {
+    $("#my-games").html("None");
+    return;
+  }
+
+  // Loop through games and create li per game
+  Object.keys(gameArray).forEach(function(key, index) 
   {
     $("#my-games").append(
-        "<li data-id=\"" + gameArray[i].Hash + "\""
-        + "data-name=\"" + gameArray[i].Hash + "\">"
-        + gameArray[i].name
-        + "</li>");
-  }
+      "<li data-id=\"" + key + "\""
+      + "data-name=\"" + key + "\">"
+      + this[key].name
+      + "</li>");
+  }, gameArray);
 }
 
 
@@ -771,5 +767,98 @@ var displayActiveGame = function()
   //loadHistory();
 }
 
+
+
+  /** 
+   * Set App state to APP_STATE_EMPTY
+   */      
+  var resetApp = function()
+  {
+    squareToHighlight     = null;
+    colorToHighlight      = null;
+    hasProposedMove       = false;
+    lastValidMove         = null;
+    lastSubmittedMove     = null;
+    canWhitePlay          = null;
+    iPlayWhite            = null;
+    lastSubmittedFen      = null;
+    canUndoMove           = false;
+    canSubmit             = false;
+    mustSubmitOnHolochain = true;
+    moveCount             = 0;
+
+    activeOpponentHashkey  = null;
+    activeChallengeHashkey = null;
+    activeChallengeEntry   = null;
+    activeOpponentHandle   = null;
+
+    game.reset();
+    board.clear();
+    board.orientation('white');
+
+    removeHighlights('b');
+    removeHighlights('w');        
+    logEl.empty();
+    logEl.append("<tr><th>#</th><th>White</th><th>Black</th></tr>");
+    $('#submit-button').prop("disabled", true);
+    $('#undo-button').prop("disabled", true);
+    $('#reset-button').prop("disabled", true);  
+    $('#sandbox-button').prop("disabled", false);  
+
+    $('#load-game-button').prop("disabled", true); 
+    $('#challenge-button').prop("disabled", true); 
+
+    GameTitleEl.html("");
+    opponentHandleEl.html("");
+    updateStatus();
+    updateTurnColor();
+
+    // Update state flag
+    appState = APP_STATE_EMPTY;    
+  }
+
+
+//===============================================================================
+// MAIN
+// ==============================================================================
+
+console.log("holochess.js INIT");
+
+// Setup Chessboard
+// ================
+var ChessboardConfig = 
+{
+    position     : 'start',
+    showNotation : false,
+    draggable    : true,
+    moveSpeed    : 'slow',
+    snapbackSpeed: 200,
+    snapSpeed    : 100,
+    onDragStart  : board_onDragStart,
+    onDrop       : board_onDrop,
+    onSnapEnd    : board_onSnapEnd,
+    onMouseoutSquare: board_onMouseoutSquare,
+    onMouseoverSquare: board_onMouseoverSquare,        
+    // onMoveEnd    : board_onMoveEnd // not called because there are no animations
+};
+
+var board = Chessboard('#myBoard', ChessboardConfig);
+// Setup chess engine
+var game = new Chess();
+
+// var board = Chessboard('#myBoard2', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R')
+// var board = Chessboard('#myBoard', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R')
+
+// Get data from HC
+hcp_getMyHandle().then(function(myHandle)
+{
+  myHandleEl.html("(" + myHandle + ")");
+});
+getAllHandles();
+setInterval(getAllHandles, 2000);
+getMyGames();
+setInterval(getMyGames, 2000);
+
+resetApp();
 
 })() // end anonymous wrapper
