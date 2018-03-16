@@ -25,6 +25,8 @@ var myHandleEl       = $('#my-handle');
 var boardEl          = $('#myBoard');
 var logEl            = $('#logtable');
 var GameTitleEl      = $('#active-game');
+var myGamesUl      = $('#my-games');
+var myGamesLi      = $('#my-games li');
 var squareClass      = '.square-55d63';
 
 // Stateful variables
@@ -44,10 +46,9 @@ var canSubmit; // can this player submit a move
 
 var activeOpponentHashkey;
 var activeChallengeHashkey;
-var activeChallengeEntry;
-// var activeOpponentHandle;
 
 var myGames;
+var loadedGame;
 var g_allHandles;   // Cache of all known Handles on the holochain DHT
 
 
@@ -172,7 +173,8 @@ var submitMove = function()
   {
     hc_commitMove(g_loadedChallengeHashkey, lastSan, moveCount);
   }
-  updateGame(lastMove);    
+  updateGame(lastMove);
+  loadedGame.myTurn = false;    
 }  
 
 
@@ -445,20 +447,19 @@ var updateStatus = function()
 $('#sandbox-button').on('click', function() 
 {
   // First set state APP_STATE_EMPTY
-    resetApp();
+  resetApp();
 
-    mustSubmitOnHolochain        = false;
-    canWhitePlay      = true;
-    // iPlayWhite        = true;
-    lastSubmittedFen  = startingFen;
-         
-    board.start(); 
-    updateStatus();
-    updateTurnColor();    
-    opponentHandleEl.html("Me"); // FIXME: agent can have this handle as well :(
-    GameTitleEl.html("sandbox");  
-    $('#reset-button').prop("disabled", false);
-    appState = APP_STATE_SANDBOX;    
+  mustSubmitOnHolochain = false;
+  canWhitePlay          = true;
+  lastSubmittedFen      = startingFen;
+        
+  board.start(); 
+  updateStatus();
+  updateTurnColor();    
+  opponentHandleEl.html("Me"); // FIXME: agent can have this handle as well :(
+  GameTitleEl.html("sandbox");  
+  $('#reset-button').prop("disabled", false);
+  appState = APP_STATE_SANDBOX;    
 });
 
 
@@ -481,10 +482,14 @@ $("#load-game-button").on('click', function()
   // {
 
     loadGame(activeChallengeHashkey);
-    setInterval(loadGame, 2000);
   // }
 });
 
+
+/**
+ * 
+ * @param {*} ChallengeHashkey 
+ */
 var loadGame = function(ChallengeHashkey)
 {
   if(!ChallengeHashkey || ChallengeHashkey == undefined)
@@ -492,14 +497,14 @@ var loadGame = function(ChallengeHashkey)
     ChallengeHashkey = g_loadedChallengeHashkey;
   }
 
-  hcp_getMoves(ChallengeHashkey).then(function(sanArray)
+  return hcp_getMoves(ChallengeHashkey).then(function(sanArray)
   {
      // First set app state to APP_STATE_EMPTY 
     resetApp();
     canWhitePlay = true;
 
     // Get Game
-    const loadedGame = myGames[g_loadedChallengeHashkey];
+    loadedGame = myGames[g_loadedChallengeHashkey];
 
     // Go through all the moves
     for(let i = 0; i < sanArray.length; i++)
@@ -523,6 +528,10 @@ var loadGame = function(ChallengeHashkey)
       console.log("\t\tBOARD FLIP");
       board.orientation('black');
     }
+
+    loadedGame.myTurn = (loadedGame.iPlayWhite && canWhitePlay ||
+                         !loadedGame.iPlayWhite && !canWhitePlay);
+
     canSubmit = loadedGame.myTurn;
 
     // Update Html
@@ -532,9 +541,11 @@ var loadGame = function(ChallengeHashkey)
     $('#reset-button').prop("disabled", false);  
     updateStatus();
     updateTurnColor(); 
-    
+  
+    setSelectedGame(ChallengeHashkey);
+
     // Update state flag
-    appState = APP_STATE_CHALLENGE_VIEWING;       
+    appState = APP_STATE_CHALLENGE_VIEWING;
   });
 };
 
@@ -596,25 +607,49 @@ var getMyGames = function()
 };
 
 
+/**
+ * 
+ * @param {*} agentHashkey 
+ */
+var setSelectedPlayer = function(agentHashkey)
+{
+  activeOpponentHashkey = agentHashkey;  
+  $("#players li").removeClass("selected-player");
+  if(activeOpponentHashkey)
+  {
+    var elem = $("#players li[data-id=" + activeOpponentHashkey + "]");
+    $(elem).addClass("selected-player");
+  }
+  $('#challenge-button').prop("disabled", false); 
+};
+
+
 // Select Opponent
 $("#players").on("click", "li", function()
 {
-  $("#players li").removeClass("selected-player");
-  activeOpponentHashkey = $(this).data('id');
-  var elem = $("#players li[data-id=" + activeOpponentHashkey + "]");
-  $(elem).addClass("selected-player");
-  $('#challenge-button').prop("disabled", false); 
+  setSelectedPlayer($(this).data('id'));
 }); 
+
+
+// Select Game
+var setSelectedGame = function(challengeHashkey)
+{
+  activeChallengeHashkey = challengeHashkey;       
+  myGamesLi.removeClass("selected-player");        
+  if(activeChallengeHashkey)
+  {   
+    var elem = $("#my-games li[data-id=" + activeChallengeHashkey + "]");
+    $(elem).addClass("selected-player"); 
+  }
+  // $('#load-game-button').prop("disabled", false); 
+};
 
 
 // Select Game
 $("#my-games").on("click", "li", function()
 {
-  $("#my-games li").removeClass("selected-player");
-  activeChallengeHashkey = $(this).data('id');
-  var elem = $("#my-games li[data-id=" + activeChallengeHashkey + "]");
-  $(elem).addClass("selected-player");  
-  $('#load-game-button').prop("disabled", false); 
+
+  loadGame($(this).data('id'));
 });
 
     
@@ -703,20 +738,17 @@ var makeMyGamesUl = function(gameArray)
   }
 
   myGames = gameArray;
-
-  $("#my-games").empty();
-
+  myGamesUl.empty();
   // edge case: No games
   if(gameArray.length == 0)
   {
-    $("#my-games").html("None");
+    myGamesUl.html("None");
     return;
   }
-
   // Loop through games and create li per game
   Object.keys(gameArray).forEach(function(key, index) 
   {
-    $("#my-games").append(
+    myGamesUl.append(
       "<li data-id=\"" + key + "\""
       + "data-name=\"" + key + "\">"
       + this[key].name
@@ -736,7 +768,6 @@ var makeMyGamesUl = function(gameArray)
     lastValidMove         = null;
     lastSubmittedMove     = null;
     canWhitePlay          = null;
-    // iPlayWhite            = null;
     lastSubmittedFen      = null;
     canUndoMove           = false;
     canSubmit             = false;
@@ -745,13 +776,15 @@ var makeMyGamesUl = function(gameArray)
 
     activeOpponentHashkey  = null;
     activeChallengeHashkey = null;
-    activeChallengeEntry   = null;
-    // activeOpponentHandle   = null;
+
+    loadedGame = null;
 
     gameEngine.reset();
     board.clear();
     board.orientation('white');
 
+    setSelectedPlayer(null);
+    setSelectedGame(null);
     removeHighlights('b');
     removeHighlights('w');        
     logEl.empty();
@@ -773,6 +806,19 @@ var makeMyGamesUl = function(gameArray)
     appState = APP_STATE_EMPTY;    
   }
 
+
+
+  /**
+   * Re-load current game if it's not my turn
+   */
+  var updateLoadedGame = function()
+  {
+    if(loadedGame && !loadedGame.myTurn)
+    {
+      const tmp = activeChallengeHashkey;
+      loadGame();
+    }
+  }  
 
 //===============================================================================
 // MAIN
@@ -814,6 +860,8 @@ getAllHandles();
 setInterval(getAllHandles, 2000);
 getMyGames();
 setInterval(getMyGames, 2000);
+
+setInterval(updateLoadedGame, 2000);
 
 resetApp();
 

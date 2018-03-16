@@ -389,16 +389,17 @@ function hcp_getChallengeHandles(challengeResponse)
           g_myGames[challengeResponse.Hash].challengerHandle = str;
           return hcp_getHandle(challengeResponse.Entry.opponent).then(function(str)
                   {
+                    var game = g_myGames[challengeResponse.Hash];
+
                     g_myGames[challengeResponse.Hash].opponentHandle = str;
 
                     // Compute game state
-                    g_myGames[challengeResponse.Hash].iAmChallenger = (loadedGame.challenger === hc_getMyHash());
-                    g_myGames[challengeResponse.Hash].iPlayWhite    = (iAmChallenger && loadedGame.challengerPlaysWhite || 
-                                                                      !iAmChallenger && !loadedGame.challengerPlaysWhite);
-                    g_myGames[challengeResponse.Hash].myTurn        = (iPlayWhite && canWhitePlay || !iPlayWhite && !canWhitePlay);
+                    g_myGames[challengeResponse.Hash].iAmChallenger = (game.challenger === hc_getMyHash());
+                    const iAmChallenger = g_myGames[challengeResponse.Hash].iAmChallenger;
+                    g_myGames[challengeResponse.Hash].iPlayWhite    = (iAmChallenger && game.challengerPlaysWhite || 
+                                                                      !iAmChallenger && !game.challengerPlaysWhite);
                                         
-                    // generate name
-                    const game        = g_myGames[challengeResponse.Hash];
+                    // generate name                    
                     const whiteHandle = (game.challengerPlaysWhite? game.challengerHandle : game.opponentHandle);
                     const blackHandle = (game.challengerPlaysWhite? game.opponentHandle : game.challengerHandle);
 
