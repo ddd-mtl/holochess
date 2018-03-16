@@ -171,42 +171,6 @@ function hc_commitChallenge(opponent)
             );  
 }
  
-/** 
- * Calls zome's "getMyGames"
- */
-// function hc_getMyGames(callbackFn) 
-// {
-//   if(callbackFn == undefined)
-//   {
-//     return;
-//   }     
-//   ajax_send("getMyGames", 
-//             undefined, 
-//             function(json) 
-//             {
-//               console.log("hc_getMyGames response:\n" + json + "\n");
-//               g_myGames = JSON.parse(json);
-
-//               // Get Handles and store them in games array
-//               for (let i = 0; i < gameArray.length; i++)
-//               {
-//                 hc_getHandle( gameArray[i].Entry.challenger, 
-//                               function(handle)
-//                               {
-//                                 console.log("\t getMyGamesCallback::hc_getHandle challenger = " + handle);
-//                                 myGames[i].challengerHandle = handle;                              
-//                               });
-//                 hc_getHandle( gameArray[i].Entry.opponent, 
-//                               function(handle)
-//                               {
-//                                 console.log("\t getMyGamesCallback::hc_getHandle opponent = " + handle);
-//                                 myGames[i].opponentHandle = handle;        
-//                               });   
-//               }  
-//               callbackFn(JSON.parse(json));
-//             });          
-// }
-
 
 /** 
  * 
@@ -229,6 +193,7 @@ function hc_getChallenge(challengeHashkey, callbackFn)
                   }      
               });    
 }
+
 
 //===============================================================================
 // MOVES
@@ -386,6 +351,28 @@ function hcp_getAllHandles()
 }
 
 
+function hcp_getMoves(gameHashkey) 
+{
+  console.log("hcp_getMoves called: " + gameHashkey);
+  
+  g_loadedChallengeHashkey = gameHashkey;
+
+  var promise = hcp_json("getMoves", JSON.stringify(gameHashkey)); // because "CallingType": "json"
+
+  return promise.then(function(moveArray)
+        {
+          console.log("hcp_getMoves succeeded: " + moveArray.length);             
+          return moveArray;
+        },
+        function(err)
+        {
+          console.log("hcp_getMoves failed: " + err); 
+          g_loadedChallengeHashkey = null;
+          return [];
+        });
+}
+
+
 /**
  * 
  */
@@ -404,8 +391,14 @@ function hcp_getChallengeHandles(challengeResponse)
                   {
                     g_myGames[challengeResponse.Hash].opponentHandle = str;
 
+                    // Compute game state
+                    g_myGames[challengeResponse.Hash].iAmChallenger = (loadedGame.challenger === hc_getMyHash());
+                    g_myGames[challengeResponse.Hash].iPlayWhite    = (iAmChallenger && loadedGame.challengerPlaysWhite || 
+                                                                      !iAmChallenger && !loadedGame.challengerPlaysWhite);
+                    g_myGames[challengeResponse.Hash].myTurn        = (iPlayWhite && canWhitePlay || !iPlayWhite && !canWhitePlay);
+                                        
                     // generate name
-                    const game = g_myGames[challengeResponse.Hash];                    
+                    const game        = g_myGames[challengeResponse.Hash];
                     const whiteHandle = (game.challengerPlaysWhite? game.challengerHandle : game.opponentHandle);
                     const blackHandle = (game.challengerPlaysWhite? game.opponentHandle : game.challengerHandle);
 
