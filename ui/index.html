@@ -26,7 +26,7 @@
         </div> -->
         <div class="panel panel-default">
           <div class="panel-heading">
-            Players <span id="my-handle"></span>
+              <h3 class = "panel-title">Players <span id="my-handle"></span></h3>            
             <div class="header-buttons">
                 <!-- <button id="get-handles-button" type="button" class="btn btn-primary">Get Players</button> -->
               </div>
@@ -47,7 +47,7 @@
       <div class="col-md-4">
         <div class="panel panel-default">
           <div id="my-games-header" class="panel-heading">
-            My Games
+              <h3 class = "panel-title">My Games</h3> 
             <div class="header-buttons">
                 <!-- <button id="get-games-button" type="button" class="btn btn-primary">Get my games</button>           -->
               </div> 
@@ -69,7 +69,8 @@
       <!-- Game panel --> 
       <div class="col-md-6">
         <div class="row panel panel-default">  
-          <div class="panel-heading"><span id="active-game"></span>
+          <div class="panel-heading">
+            <h3 class = "panel-title"><span id="active-game"></span></h3>
             <div class="row header-buttons">
               <!-- No buttons --> 
             </div>
@@ -78,9 +79,9 @@
             <!-- Board -->      
             <div class="col-md-6">      
                 <div id="myBoard"></div>
-                <p><span id="turn-color"></span> turn</p>
-                <p>Status: <span id="status"></span></p>
-                <p>Opponent: <span id="playerid"></span></p>  
+                <p id="turn-status"><span id="turn-color"></span></p>
+                <p><span id="board-status"></span></p>
+                <!-- <p>Opponent: <span id="playerid"></span></p>   -->
               </div>            
             <!-- Move log -->
             <div class="col-md-6" id="log">   
