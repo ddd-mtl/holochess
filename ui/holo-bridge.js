@@ -14,7 +14,7 @@
 var g_myHash                 = null; // Cached hashkey of this Agent
 var g_myHandle               = null; // Cached Handle of this Agent
 var g_loadedChallengeHashkey = null; // Challenge hashkey loaded on chessboard
-var g_myGames                = null; // Cached Challenges & VM data
+var g_myGames                = null; // Cached Challenges & View-model data
 
 
 //===============================================================================
@@ -41,15 +41,15 @@ function ajax_send(fn, data, resultFn)
 
 
 // 
-function hc_commitChallenge(opponent) 
+function hc_commitChallenge(challengee) 
 {
-  if (!opponent || opponent == undefined) 
+  if (!challengee || challengee == undefined) 
   {
     alert("pick a player first!");
     return;
   }
   ajax_send("commitChallenge", 
-            JSON.stringify({ timestamp: new Date().valueOf(), opponent: opponent, challengerPlaysWhite: true, isGamePublic: true }),  // FIXME: change constants to variables
+            JSON.stringify({ timestamp: new Date().valueOf(), challengee: challengee, challengerPlaysWhite: true, isGamePublic: true }),  // FIXME: change constants to variables
             function(json)
             {
               console.log("Challenge Hashkey: " + json);
@@ -225,11 +225,11 @@ function hcp_getChallengeHandles(challengeResponse)
   return hcp_getHandle(challengeResponse.Entry.challenger).then(function(str)
         {
           g_myGames[challengeResponse.Hash].challengerHandle = str;
-          return hcp_getHandle(challengeResponse.Entry.opponent).then(function(str)
+          return hcp_getHandle(challengeResponse.Entry.challengee).then(function(str)
                   {
                     var game = g_myGames[challengeResponse.Hash];
 
-                    g_myGames[challengeResponse.Hash].opponentHandle = str;
+                    g_myGames[challengeResponse.Hash].challengeeHandle = str;
 
                     // Compute game state
                     // assert(g_myHash);
@@ -239,8 +239,8 @@ function hcp_getChallengeHandles(challengeResponse)
                                                                       !iAmChallenger && !game.challengerPlaysWhite);
                                         
                     // generate name                    
-                    const whiteHandle = (game.challengerPlaysWhite? game.challengerHandle : game.opponentHandle);
-                    const blackHandle = (game.challengerPlaysWhite? game.opponentHandle : game.challengerHandle);
+                    const whiteHandle = (game.challengerPlaysWhite? game.challengerHandle : game.challengeeHandle);
+                    const blackHandle = (game.challengerPlaysWhite? game.challengeeHandle : game.challengerHandle);
 
                     var date = new Date();
                     date.setTime(game.timestamp);
@@ -254,7 +254,7 @@ function hcp_getChallengeHandles(challengeResponse)
 
 
 /**
- * When returned, g_myGames should be filled with Entries and opponentHandle & challengerHandle.
+ * When returned, g_myGames should be filled with Entries and challengeeHandle & challengerHandle.
  */
 function hcp_getMyGames() 
 {

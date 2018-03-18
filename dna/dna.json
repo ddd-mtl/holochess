@@ -20,67 +20,73 @@
       "Entries": [
           {
             "Name": "handle",
+            "DataFormat": "string",            
             "Comment": "Agent's self set name (non unique)",
-            "DataFormat": "string",
             "Sharing": "public"
           },
           {
             "Name": "challenge",
+            "DataFormat": "json",            
             "Comment": "Chess game initiation entry",
-            "DataFormat": "json",
             "SchemaFile": "challenge.json",
             "Sharing": "public"
           },                                
           {
               "Name": "move",
+              "DataFormat": "json",              
               "Comment": "Chess half-move entry for a specific game",
-              "DataFormat": "json",
               "SchemaFile": "move.json",
               "Sharing": "public"
           },
           {
               "Name": "game_result",
+              "DataFormat": "json",              
               "Comment": "NOT USED YET - Chess game closing entry",
-              "DataFormat": "json",
               "SchemaFile": "game_result.json",
               "Sharing": "public"
           },
           {
               "Name": "handle_links",
-              "Comment": "Bind Handle to Agent",
-              "Tags": "handle",              
-              "DataFormat": "links"
+              "DataFormat": "links",              
+              "Base": "agent",
+              "Link": "handle",
+              "Tags": ["handle"]     
           },
           {
             "Name": "challenge_links",
+            "DataFormat": "links",            
             "Comment": "Bind Challenge to Agent",
-            "Tags": "initiated, received",
-            "DataFormat": "links"
+            "Base": "agent",
+            "Link": "challenge",
+            "Tags": ["initiated", "received"]
           },          
           {
               "Name": "move_links",
+              "DataFormat": "links",              
               "Comment": "Bind Move to Challenge",
-              "Tags": "halfmove",
-              "DataFormat": "links"
+              "Base": "challenge",
+              "Link": "move",
+              "Tags": ["halfmove"]
           },                
           {
               "Name": "directory_links",
+              "DataFormat": "links",              
               "Comment": "Bind Agent to App",
-              "Tags": "player",
-              "DataFormat": "links"
+              "Base": "app",
+              "Link": "agent",
+              "Tags": ["player"]              
           },                                
           {
               "Name": "history_link_base",
+              "DataFormat": "string",              
               "Comment": "NOT USED YET",
-              "Tags": "",
-              "DataFormat": "string",
               "Sharing": "public"
           },
           {
               "Name": "history_links",
+              "DataFormat": "links",              
               "Comment": "NOT USED YET",
-              "Tags": "",
-              "DataFormat": "links"
+              "Tags": [""]
           }                
       ],
       "Functions": [

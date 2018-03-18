@@ -43,7 +43,7 @@ var mustSubmitOnHolochain; // true if game state required submission
 var canSubmit;             // can this player submit a move
 var loadedGame;
 var myTurn;
-var opponentHandle;
+var challengeeHandle;
 var cachedSanArray;
 
 // APP Stateful variables
@@ -395,7 +395,7 @@ var updateTurnColor = function()
   var turnText = '';
   if(myTurn !== null)
   {
-    turnText = (myTurn? 'My turn' : opponentHandle + "'s turn");
+    turnText = (myTurn? 'My turn' : challengeeHandle + "'s turn");
   }
   turnColorEl.html(turnText);  
 };
@@ -457,7 +457,7 @@ $('#sandbox-button').on('click', function()
   board.start(); 
   updateStatus();
   updateTurnColor();  
-  opponentHandle = '';  
+  challengeeHandle = '';  
   GameTitleEl.html("sandbox");  
   $('#reset-button').prop("disabled", false);
   appState = APP_STATE_SANDBOX;    
@@ -528,7 +528,7 @@ var loadGame = function(ChallengeHashkey)
     canSubmit = myTurn;
 
     // Update Html
-    opponentHandle = (loadedGame.iAmChallenger? loadedGame.opponentHandle : loadedGame.challengerHandle);                              
+    challengeeHandle = (loadedGame.iAmChallenger? loadedGame.challengeeHandle : loadedGame.challengerHandle);                              
     GameTitleEl.html(loadedGame.name);
     $('#reset-button').prop("disabled", false);  
     updateStatus();
@@ -786,7 +786,7 @@ var resetApp = function()
   $('#challenge-button').prop("disabled", true); 
 
   GameTitleEl.html("");
-  opponentHandle = '';
+  challengeeHandle = '';
   updateStatus();
   updateTurnColor();
 

@@ -7,7 +7,7 @@
       "comment": "Hashkey of Agent who initiated the challenger.",
       "constraints": "Must be self (Source)."
 		},      
-		"opponent": {
+		"challengee": {
 			"type": "string",
       "comment": "Hashkey of Agent who receives the challenge.",
       "constraints": "Must be an Agent Hashkey different from Challenger (Source)."
@@ -25,5 +25,5 @@
       "comment": "If TRUE the game's Moves will be published on the DHT, otherwise will only be on each player's source chains."
     }    
   },
-  "required": ["challenger", "opponent", "timestamp"]
+  "required": ["challenger", "challengee", "timestamp"]
 }

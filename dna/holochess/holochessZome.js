@@ -160,11 +160,11 @@ function commitChallenge(challenge)
   // commit challenge entry to my source chain
   var challengeHashkey = commit('challenge', challenge);
 
-  debug("new challenge: "+ challengeHashkey + "\n\t challenger: " + ME + "\n\t opponent  :" + challenge.opponent);
+  debug("new challenge: "+ challengeHashkey + "\n\t challenger: " + ME + "\n\t challengee  :" + challenge.challengee);
 
   // On the DHT, put a link on my hashkey, and my opponents hashkey, to the new challenge.
-  commit("challenge_links", {Links:[{Base:ME,Link:challengeHashkey,Tag:"initiated"}]});
-  commit("challenge_links", {Links:[{Base:challenge.opponent,Link:challengeHashkey,Tag:"received"}]});
+  commit("challenge_links", {Links:[{Base:ME, Link:challengeHashkey ,Tag:"initiated"}]});
+  commit("challenge_links", {Links:[{Base:challenge.challengee, Link:challengeHashkey,Tag:"received"}]});
   return challengeHashkey;
 }
 
@@ -230,7 +230,7 @@ function getChallenge(entryHashkey)
 /**
  *  return array of entries of challenges that corresponds to query parameters
  */ 
-//// function getGamesBy(stateMask, challenger, opponent)
+//// function getGamesBy(stateMask, challenger, challengee)
 function getMyGames()
 {
   debug("getMyGames:");
@@ -365,13 +365,13 @@ function validateChallenge(entry, header, pkg, sources)
   // FIXME challenger equals Source
   
   // Opponent MUST be different from challenger
-  if(entry.challenger === entry.opponent)
+  if(entry.challenger === entry.challengee)
   {
-    debug("Challenge not valid because challenger and opponent are same.");
+    debug("Challenge not valid because challenger and challengee are same.");
     return false;
   }
 
-  // FIXME opponent is valid Agent Hash
+  // FIXME challengee is valid Agent Hash
 
   ////return validate('challenge', entry, header, pkg, sources);
   

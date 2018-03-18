@@ -17,7 +17,7 @@
     },    
     {
       "Time":5000,
-      "Convey":"get opponent's handle",
+      "Convey":"get challengee's handle",
       "Zome": "Holochess",
       "FnName": "getAllHandles",
       "Input": "",
