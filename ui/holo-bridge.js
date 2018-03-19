@@ -1,11 +1,11 @@
 // Copyright (C) 2018, Damien Douté
-// Based on The MetaCurrency Project (Eric Harris-Braun & Arthur Brock)
 // Use of this source code is governed by GPLv3 found in the LICENSE file
 //---------------------------------------------------------------------------------------
 
+// holo-bridge.js
 // Responsable only for communication with holochain zome
 //      Doesnt know anything about html / css
-// Communicates with  Holochain.js
+// Called by holochain.js
 
 //===============================================================================
 // GLOBALS
@@ -14,70 +14,14 @@
 var g_myHash                 = null; // Cached hashkey of this Agent
 var g_myHandle               = null; // Cached Handle of this Agent
 var g_loadedChallengeHashkey = null; // Challenge hashkey loaded on chessboard
-var g_myGames                = null; // Cached Challenges & View-model data
+var g_myGames                = null; // View-model for Challenges
 
 
 //===============================================================================
-// HOLOCHAIN AJAX COMMITS 
+// HOLOCHAIN PROMISE - HCP
 // ==============================================================================
 
-// use send to make an ajax call to zome's exposed functions
-function ajax_send(fn, data, resultFn) 
-{
-  console.log("calling: " + fn + " with " + JSON.stringify(data));
-  $.post( "/fn/Holochess/" + fn,
-          data,
-          function(response) 
-          {
-            console.log("\tresponse: " + response);
-            resultFn(response);
-          }
-  ).fail(function(response)
-        {
-          console.log("\tresponse to \"" + fn + "\" failed: " + response.responseText);
-        })
-  ;
-};
-
-
-// 
-function hc_commitChallenge(challengee) 
-{
-  if (!challengee || challengee == undefined) 
-  {
-    alert("pick a player first!");
-    return;
-  }
-  ajax_send("commitChallenge", 
-            JSON.stringify({ timestamp: new Date().valueOf(), challengee: challengee, challengerPlaysWhite: true, isGamePublic: true }),  // FIXME: change constants to variables
-            function(json)
-            {
-              console.log("Challenge Hashkey: " + json);
-              // n/a
-            }
-            );  
-}
- 
-
-// 
-function hc_commitMove(gameHashkey, sanMove, index) 
-{
-  console.log("commitMove: " + index + ". " + sanMove + " | " + gameHashkey);
-  ajax_send("commitMove",
-            JSON.stringify({gameHash:gameHashkey, san:sanMove, index:index}),  
-            function(str)
-            {
-              // n/a
-              // Check for error?
-            });
-}
-
-
-//===============================================================================
-// HOLOCHAIN PROMISES
-// ==============================================================================
-
-function hc_promise(fn, data)
+function hcp(fn, data)
 {
   return new Promise(function(resolve, reject)
                     {
@@ -104,7 +48,7 @@ function hc_promise(fn, data)
                                   };
 
                       // Handle network errors
-                      req.onerror = function() { reject(Error("hc_promise Error")); };
+                      req.onerror = function() { reject(Error("HCP Error")); };
 
                       // Make the request
                       // var reqData = JSON.stringify({'content': data, 'timestamp': 101010})
@@ -118,8 +62,12 @@ function hc_promise(fn, data)
  */
 function hcp_json(fn, data)
 {
-  return hc_promise(fn, data).then(JSON.parse);
+  return hcp(fn, data).then(JSON.parse);
 }
+
+//============================================================================
+// GET HANDLES / AGENTS
+//============================================================================
 
 
 /** 
@@ -132,7 +80,7 @@ function hcp_getMyHash()
   {
     return Promise.resolve(g_myHash);
   }
-  return hc_promise("getMyHash").then(function(str)
+  return hcp("getMyHash").then(function(str)
         {
           g_myHash = str;
           return g_myHash;
@@ -151,7 +99,7 @@ function hcp_getHandle(agentHashkey)
     console.log("hcp_getHandle abort: bad arguments");
     return Promise.reject();
   }    
-  return hc_promise("getHandle", agentHashkey);
+  return hcp("getHandle", agentHashkey);
 }
 
 
@@ -185,6 +133,10 @@ function hcp_getAllHandles()
 }
 
 
+//============================================================================
+// GET CHALLENGES / MOVES
+//============================================================================
+
 /**
  * 
  * @param {*} gameHashkey 
@@ -216,7 +168,7 @@ function hcp_getMoves(gameHashkey)
  */
 function hcp_getChallengeHandles(challengeResponse)
 {
-  console.log("hcp_getChallengeHandles called: " + JSON.stringify(challengeResponse));
+  //console.log("hcp_getChallengeHandles called: " + JSON.stringify(challengeResponse));
   if (challengeResponse == undefined)
   {
     console.log("hcp_getChallengeHandles abort: bad arguments");
@@ -260,8 +212,7 @@ function hcp_getMyGames()
 {
   return hcp_json("getMyGames").then(function(challengeEntries) 
             {
-              console.log("hcp_getMyGames response:\n" + JSON.stringify(challengeEntries) + "\n");
-
+              // console.log("hcp_getMyGames response:\n" + JSON.stringify(challengeEntries) + "\n");
               g_myGames = new Object();
               for(let i = 0; i < challengeEntries.length; i++)
               {
@@ -272,6 +223,48 @@ function hcp_getMyGames()
                      {    
                       console.log("hcp_getMyGames failed");                 
                      });          
+}
+
+
+//============================================================================
+// COMMITS
+//============================================================================
+
+// 
+function hcp_commitChallenge(challengeeHashkey) 
+{
+  // Check pre-conditions
+  if (!challengeeHashkey || challengeeHashkey == undefined) 
+  {
+    alert("pick a player first!");
+    return Promise.reject();
+  }
+  // Create Holochain Entry
+  const challengeEntry = {
+    timestamp           : new Date().valueOf(),
+    challengee          : challengeeHashkey,
+    challengerPlaysWhite: true,                  // FIXME: bind to variable
+    isGamePublic        : true                   // FIXME: bind to variable
+  }
+  // Create Promise
+  return hcp_json("commitChallenge", JSON.stringify(challengeEntry));  
+}
+
+
+// 
+function hcp_commitMove(gameHashkey, sanMove, index) 
+{
+  console.log("hcp_commitMove: " + index + ". " + sanMove + " | " + gameHashkey);  
+  // Check pre-conditions
+  if (   !gameHashkey || gameHashkey == undefined
+      || !sanMove || sanMove == undefined
+      || index == undefined) 
+  {
+    alert("Failed committing move!");
+    return Promise.reject();
+  }
+  // Create Promise
+  return hcp("commitMove", JSON.stringify({gameHash:gameHashkey, san:sanMove, index:index}));
 }
 
 

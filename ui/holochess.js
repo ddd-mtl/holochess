@@ -169,7 +169,7 @@ var submitMove = function()
 
   if(mustSubmitOnHolochain)
   {
-    hc_commitMove(g_loadedChallengeHashkey, lastSan, moveCount);
+    hcp_commitMove(g_loadedChallengeHashkey, lastSan, moveCount);
   }
   updateGame(lastMove);
   myTurn = false;    
@@ -486,7 +486,7 @@ var loadGame = function(ChallengeHashkey)
 
   return hcp_getMoves(ChallengeHashkey).then(function(sanArray)
   {
-    if(isEqual(sanArray, cachedSanArray))
+    if(sanArray && cachedSanArray && isEqual(sanArray, cachedSanArray))
     {
       return;
     }
@@ -567,8 +567,15 @@ $('#submit-button').on('click', submitMove);
 
 $("#challenge-button").on("click", function()
 {
-  hc_commitChallenge(activeOpponentHashkey);
-  setSelectedPlayer(null);
+  hcp_commitChallenge(activeOpponentHashkey).then(function(challengeHashkey)
+  {
+    // console.debug("new game: " + str);
+    setSelectedPlayer(null);
+    getMyGames().then(function()
+    {
+      loadGame(challengeHashkey);
+    });    
+  });
 });    
 
 
@@ -591,7 +598,7 @@ var getMyGames = function()
 {
   return hcp_getMyGames().then(function()
     {  
-      makeMyGamesUl(g_myGames);
+      buildMyGamesUl(g_myGames);
     })
     .catch(function(err)
     {
@@ -613,7 +620,7 @@ var setSelectedPlayer = function(agentHashkey)
     var elem = $("#players li[data-id=" + activeOpponentHashkey + "]");
     $(elem).addClass("selected-player");
   }
-  $('#challenge-button').prop("disabled", false); 
+  $('#challenge-button').prop("disabled", activeOpponentHashkey == null); 
 };
 
 
@@ -640,6 +647,7 @@ var setSelectedGame = function(challengeHashkey)
 // Select Game
 $("#my-games").on("click", "li", function()
 {
+  cachedSanArray = null;
   loadGame($(this).data('id'));
 });
 
@@ -718,31 +726,35 @@ var updateGame = function(newMove)
  * 
  * @param {*} gameArray 
  */
-var makeMyGamesUl = function(gameArray)
+var buildMyGamesUl = function(gameArray)
 {
-  // pre-conditions
-  if(!gameArray || gameArray === undefined || isEqual(myGames, gameArray))
-  {
-    return;
-  }
-
-  myGames = gameArray;
-  myGamesUl.empty();
-  // edge case: No games
-  if(gameArray.length == 0)
+  // Check edge case: No games
+  if(!gameArray || gameArray === undefined || gameArray.length == 0)
   {
     myGamesUl.html("None");
     return;
   }
+  // Check if something changed
+  if(isEqual(myGames, gameArray))
+  {
+    return;
+  }
   // Loop through games and create li per game
+  myGames = gameArray;
+  myGamesUl.empty();
   Object.keys(gameArray).forEach(function(key, index) 
   {
     myGamesUl.append(
-      "<li data-id=\"" + key + "\""
+        "<li data-id=\"" + key + "\""
       + "data-name=\"" + key + "\">"
       + this[key].name
       + "</li>");
   }, gameArray);
+  // Re-select active challenge
+  if(activeChallengeHashkey)
+  {
+    setSelectedGame(activeChallengeHashkey);
+  }  
 }
 
 

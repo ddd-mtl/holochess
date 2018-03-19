@@ -117,7 +117,7 @@ input[type="button"]:disabled {
 
 #turn-status, #board-status {
   font-size: 20px;
-  margin: 10px;
+  margin: 20px;
   font-weight: 800;
   text-align: center;
 }
