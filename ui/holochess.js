@@ -449,9 +449,8 @@ var loadGame = function(challengeHash)
     cachedSanArray = sanArray;
     canWhitePlay   = true;
     
-
     // Get Game
-    loadedGame = myGames[g_loadedChallengeHash];
+    loadedGame = g_myGames[g_loadedChallengeHash]; // FIXME Game might not be ready to display
 
     // Go through all the moves
     for(let i = 0; i < sanArray.length; i++)
@@ -490,8 +489,6 @@ var loadGame = function(challengeHash)
     updateTurnColorLabel(); 
   
     setSelectedGame(challengeHash);
-
-
   });
 };
 

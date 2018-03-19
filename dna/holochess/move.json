@@ -2,7 +2,7 @@
   "title": "Move Schema",
   "type": "object",
   "properties": {
-    "gameHash": {
+    "challengeHash": {
       "type": "string",
       "comment": "Hash of challenge it is part of (may be removed in future)"
     },
@@ -15,5 +15,5 @@
       "comment": "Index position of Move in game (may be removed in future)"
     }
   },
-  "required": ["gameHash","san", "index"]
+  "required": ["challengeHash","san", "index"]
 }

@@ -276,9 +276,9 @@ function hcp_commitMove(challengeHash, sanMove, index)
   }
   // Create Holochain Entry
   const moveEntry = {
-    gameHash: challengeHash,
-    san     : sanMove,
-    index   : index
+    challengeHash : challengeHash,
+    san           : sanMove,
+    index         : index
   }
   // Create Promise
   return hcp("commitMove", JSON.stringify(moveEntry));

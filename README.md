@@ -24,7 +24,7 @@ Send a challenge request to an opponent. Fields:
  2. challengee accepts challenge and plays first move (empty if challengee does not play white)
 
  3. Player sends chess move. Fields:
-  - gameHash: Hash of challenge request
+  - challengeHash: Hash of challenge request
   - SAN: string of SAN chess move
 
   ...
