@@ -4,13 +4,13 @@
   "properties": {
 		"challenger": {
 			"type": "string",
-      "comment": "Hashkey of Agent who initiated the challenger.",
+      "comment": "Hash of Agent who initiated the challenger.",
       "constraints": "Must be self (Source)."
 		},      
 		"challengee": {
 			"type": "string",
-      "comment": "Hashkey of Agent who receives the challenge.",
-      "constraints": "Must be an Agent Hashkey different from Challenger (Source)."
+      "comment": "Hash of Agent who receives the challenge.",
+      "constraints": "Must be an Agent Hash different from Challenger (Source)."
     },
     "timestamp": {
       "type": "integer",

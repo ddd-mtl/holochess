@@ -4,7 +4,7 @@
   "properties": {
     "gameHash": {
       "type": "string",
-      "comment": "Hashkey of challenge it is part of (may be removed in future)"
+      "comment": "Hash of challenge it is part of (may be removed in future)"
     },
     "san": {
       "type": "string",

@@ -11,11 +11,12 @@
 // CONSTANTS
 var startingFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
-var APP_STATE_NULL              = 1 << 0;
-var APP_STATE_EMPTY             = 1 << 1;
-var APP_STATE_SANDBOX           = 1 << 2;
-var APP_STATE_CHALLENGE_VIEWING = 1 << 3;
-var APP_STATE_CHALLENGE_PLAYING = 1 << 4;
+// GAME STATES
+var GAME_STATE_NULL              = 1 << 0;
+var GAME_STATE_EMPTY             = 1 << 1;
+var GAME_STATE_SANDBOX           = 1 << 2;
+var GAME_STATE_CHALLENGE_VIEWING = 1 << 3;
+var GAME_STATE_CHALLENGE_PLAYING = 1 << 4;
 
 // Html Elements
 var turnColorEl      = $('#turn-color');
@@ -29,10 +30,8 @@ var myGamesUl        = $('#my-games');
 var squareClass      = '.square-55d63';
 
 // Game panel stateful variables
-var appState = APP_STATE_NULL;
+var gameState = GAME_STATE_NULL;
 var squareToHighlight;
-var colorToHighlight;
-var moveCount;
 var hasProposedMove;
 var lastValidMove;
 var lastSubmittedMove;
@@ -42,20 +41,25 @@ var canUndoMove;
 var mustSubmitOnHolochain; // true if game state required submission
 var canSubmit;             // can this player submit a move
 var loadedGame;
+var moveCount;
 var myTurn;
 var challengeeHandle;
 var cachedSanArray;
 
 // APP Stateful variables
-var activeOpponentHashkey  = null;
-var activeChallengeHashkey = null;
-var myGames;      // Cache of all my Games
-var allHandles;   // Cache of all known Handles on the holochain DHT
+var activeOpponentHash  = null;
+var activeChallengeHash = null;
+var myGames;         // Cache of all my Games
+var cachedHandles;   // Cache of all known Handles on the holochain DHT
 
 
-// utils
+// ========================================================================
+// Helpers
 // ========================================================================
 
+/**
+ * Clear chessboard highlights
+ */
 var removeHighlights = function(color)
 {
   //console.log(boardEl.find(squareClass));
@@ -64,9 +68,7 @@ var removeHighlights = function(color)
 
 
 /**
- * 
- * @param {*} value 
- * @param {*} other 
+ * Compare array of objects
  */
 var isEqual = function (value, other) 
 {
@@ -147,39 +149,13 @@ var isEqual = function (value, other)
 };
 
 
-/**
- * 
- */
-var submitMove = function() 
-{
-  canUndoMove       = false;
-  lastSubmittedMove = lastValidMove;
-
-  updateTurnColor();
-  lastSubmittedFen = gameEngine.fen();
-  $('#submit-button').prop("disabled", true);
-  $('#undo-button').prop("disabled", true); 
-
-  // undo-redo to get last Move object
-  const lastMove = gameEngine.undo();
-  gameEngine.move(lastMove);
-  const lastSan = lastMove.san;
-
-  console.log("Submit Move: " + lastSubmittedMove + " | " + lastSan);
-
-  if(mustSubmitOnHolochain)
-  {
-    hcp_commitMove(g_loadedChallengeHashkey, lastSan, moveCount);
-  }
-  updateGame(lastMove);
-  myTurn = false;    
-}  
-
-
+// ========================================================================
 // Chessboard callbacks
 // ========================================================================
 
-// only pick up pieces if game not over and for the side to move
+/**
+ * only pick up pieces if game not over and for the side to move
+ */
 var board_onDragStart = function(source, piece, position, orientation) 
 {
   if (gameEngine.game_over() === true                         
@@ -201,16 +177,8 @@ var board_onDragStart = function(source, piece, position, orientation)
  */
 var board_onDrop = function(source, target) 
 {
-  // create Move
-  var moveOrder = 
-  {
-    from:       source,
-    to:         target,
-    promotion:  'q' // NOTE: always promote to a queen for example simplicity // FIXME
-  };
 
-  const turnColor = gameEngine.turn();
-
+  // Revert displacement if wrong color is played  
   const sourcePiece = gameEngine.get(source);
   if(sourcePiece !== null 
       && (sourcePiece.color === 'b' && canWhitePlay === true
@@ -220,36 +188,47 @@ var board_onDrop = function(source, target)
     return 'snapback'; 
   }
 
+  // create Move
+  var moveOrder = 
+  {
+    from:       source,
+    to:         target,
+    promotion:  'q'     // FIXME: always promoting to Queen
+  };
+
+  const turnColor   = gameEngine.turn();  
   squareToHighlight = moveOrder.to;
-  colorToHighlight = turnColor;
 
   // try move
   var move = gameEngine.move(moveOrder);
 
-  // discard if move order is illegal
-  if (move === null) 
+  // check if move order was illegal 
+  // and try from moved piece's previous position
+  if (move === null)
   {
+    // can't try if it's the first move
     if(canUndoMove === false)
     {
       return 'snapback';
     }
-
-    // unless last move is same color            
+    // can't try if last move is same color            
     if(sourcePiece !== null && sourcePiece.color === turnColor)
     {
       return 'snapback';
     }
 
-    // try undoing prev move and doing new move (different piece)
+    // try undoing previous move and doing new move (different piece)
     var undoneMove = gameEngine.undo();
-    move = gameEngine.move(moveOrder)
+    move           = gameEngine.move(moveOrder)
     if(move === null)
     {
+      // there was no previous move
       if(undoneMove === null)
       {
         return 'snapback';
       }
 
+      // previous move must be same piece
       const isSamePiece = (undoneMove !== null && undoneMove.to === moveOrder.from);
       if(!isSamePiece)
       {
@@ -257,20 +236,19 @@ var board_onDrop = function(source, target)
         return 'snapback';
       }
 
-      // try from previous move source                
+      // try from previous move's "from" position
       const moveOrderAlt = 
       {
         from:       undoneMove.from,
         to:         target,
-        promotion:  'q' // FIXME: always promote to a queen for example simplicity 
+        promotion:  'q' // FIXME: always promoting to Queen
       };
 
       console.log('Alt: ' + moveOrderAlt.from + '-' + moveOrderAlt.to);
-      // if moveOrderProposalAlt.from == moveOrderProposalAlt.to
       move = gameEngine.move(moveOrderAlt);                
       if (move === null)
       {
-        // Maybe failed because trying to put piece back to origin                    
+        // Maybe failed because trying to put piece back to origin                  
         if (moveOrderAlt.from !== moveOrderAlt.to)
         {
           lastValidMove = gameEngine.move(undoneMove);
@@ -280,7 +258,10 @@ var board_onDrop = function(source, target)
     }   
   }
 
-  canUndoMove = true;
+  // Move was valid update Game Panel state
+  // ======================================
+
+  canUndoMove   = true;
   lastValidMove = move;
 
   const fen = gameEngine.fen();      
@@ -304,9 +285,8 @@ var board_onDrop = function(source, target)
   console.log(moveOrder.from +'-' + moveOrder.to + ' | ' + highlightColor);        
   boardEl.find('.square-' + source).addClass('highlight-' + highlightColor);
   boardEl.find('.square-' + target).addClass('highlight-' + highlightColor);
-  //console.log(boardEl.find('.square-' + source));
 
-  updateStatus();
+  updateGameStatusLabel();
 
   if(!mustSubmitOnHolochain)
   {
@@ -315,8 +295,10 @@ var board_onDrop = function(source, target)
 };
 
 
-// update the board position after the piece snap 
-// for castling, en passant, pawn promotion
+/**
+ * update board display
+ * Done after the piece snap because of castling, en passant and pawn promotion
+ */
 var board_onSnapEnd = function() 
 {
   console.log("board_onSnapEnd: " + gameEngine.fen());
@@ -324,20 +306,30 @@ var board_onSnapEnd = function()
   board_onMoveEnd();
 };
 
+
+/**
+ * Highlight squares
+ */
 var board_onMoveEnd = function() 
 {
   console.log(squareToHighlight + ' into ' + (canWhitePlay? 'w' : 'b') + ' || '+ '.square-' + squareToHighlight);
-  //console.log(boardEl.find('.square-' + squareToHighlight));
   boardEl.find('.square-' + squareToHighlight).addClass('highlight-' + canWhitePlay? 'w' : 'b');
 };
 
 
-
+/**
+ * 
+ */
 var removeGreySquares = function()
 {
   $('#myBoard .square-55d63').css('background', '');
 };
-  
+
+
+/**
+ * 
+ * @param {coordinate} square 
+ */
 var greySquare = function(square)
 {
   var squareEl = $('#myBoard .square-' + square);        
@@ -351,6 +343,11 @@ var greySquare = function(square)
 
 
 
+/**
+ * Apply grey filter On hovered square
+ * @param {*} square 
+ * @param {*} piece 
+ */
 var board_onMouseoverSquare = function(square, piece)
 {
   // get list of possible moves for this square
@@ -377,35 +374,369 @@ var board_onMouseoverSquare = function(square, piece)
 };
 
 
-//       
+/**
+ * 
+ */       
 var board_onMouseoutSquare = function(square, piece) 
 {
   removeGreySquares();
 };
 
 
-var updateTurnColor = function()
+// ========================================================================
+// Buttons Behavior
+// ========================================================================
+
+/**
+ * SANDBOX BUTTON = Set Game state to GAME_STATE_SANDBOX
+ */
+$('#sandbox-button').on('click', function() 
 {
-  // var moveColor = 'White';
-  // if (gameEngine.turn() === 'b')
-  // {
-  //   moveColor = 'Black';
-  // }
-  // turnColorEl.html(moveColor);
-  var turnText = '';
-  if(myTurn !== null)
+  // First set state GAME_STATE_EMPTY
+  resetGamePanel();
+
+  // Setup sandbox
+  gameState             = GAME_STATE_SANDBOX;  
+  mustSubmitOnHolochain = false;
+  canWhitePlay          = true;
+  lastSubmittedFen      = startingFen;
+
+  board.start(); 
+  updateGameStatusLabel();
+  updateTurnColorLabel();  
+  challengeeHandle = '';  
+  GameTitleEl.html("sandbox");  
+  $('#reset-button').prop("disabled", false);
+   
+});
+
+
+/**
+ * RESET BUTTON = Set Game state to GAME_STATE_EMPTY
+ */
+$('#reset-button').on('click', function()
+{
+  resetGamePanel();
+  setSelectedGame(null);
+});
+
+
+/**
+ * 
+ * @param {*} ChallengeHash 
+ */
+var loadGame = function(challengeHash)
+{
+  // if no input, reload current game
+  if(!challengeHash || challengeHash == undefined)
   {
-    turnText = (myTurn? 'My turn' : challengeeHandle + "'s turn");
+    challengeHash = g_loadedChallengeHash;
   }
+
+  // First get all Moves from Holochain
+  return hcp_getMoves(challengeHash).then(function(sanArray)
+  {
+    // End here if no new move
+    if(sanArray && cachedSanArray && isEqual(sanArray, cachedSanArray))
+    {
+      return;
+    }
+
+     // First reset game state
+    resetGamePanel();
+
+    gameState      = GAME_STATE_CHALLENGE_VIEWING;
+    cachedSanArray = sanArray;
+    canWhitePlay   = true;
+    
+
+    // Get Game
+    loadedGame = myGames[g_loadedChallengeHash];
+
+    // Go through all the moves
+    for(let i = 0; i < sanArray.length; i++)
+    {
+      console.log("\t" + i + ". " + sanArray[i]);
+      let move = gameEngine.move(sanArray[i]);            
+      if(move === null)
+      {
+        alert("invalid move:" + sanArray[i]);
+        break;
+      }
+      // undo-redo to get last Move object
+      let moveObj = gameEngine.undo();
+      gameEngine.move(moveObj);
+      updateGame(moveObj);
+    }
+    board_onSnapEnd();
+
+    // Set board orientation
+    if(!loadedGame.iPlayWhite)
+    {
+      // console.log("\t\tBOARD FLIP");
+      board.orientation('black');
+    }
+
+    // Update stateful variables
+    myTurn = (loadedGame.iPlayWhite && canWhitePlay ||
+              !loadedGame.iPlayWhite && !canWhitePlay);
+    canSubmit = myTurn;
+
+    // Update Html
+    challengeeHandle = (loadedGame.iAmChallenger? loadedGame.challengeeHandle : loadedGame.challengerHandle);                              
+    GameTitleEl.html(loadedGame.name);
+    $('#reset-button').prop("disabled", false);  
+    updateGameStatusLabel();
+    updateTurnColorLabel(); 
+  
+    setSelectedGame(challengeHash);
+
+
+  });
+};
+
+
+/**
+ * UNDO BUTTON
+ */
+$('#undo-button').on('click', function() 
+{
+  if(!canUndoMove)
+  {
+    return;
+  }
+
+  gameEngine.undo();
+  lastSubmittedFen = gameEngine.fen();            
+  $('#submit-button').prop("disabled", true);
+  $('#undo-button').prop("disabled", true);             
+  lastSubmittedMove = null;
+  canUndoMove = false;
+  board_onSnapEnd();
+});
+
+
+/**
+ * 
+ */
+var submitMove = function() 
+{
+  canUndoMove       = false;
+  lastSubmittedMove = lastValidMove;
+
+  lastSubmittedFen = gameEngine.fen();
+  $('#submit-button').prop("disabled", true);
+  $('#undo-button').prop("disabled", true); 
+
+  // undo-redo to get last Move object
+  const lastMove = gameEngine.undo();
+  gameEngine.move(lastMove);
+  const lastSan = lastMove.san;
+
+  console.log("Submit Move: " + lastSubmittedMove + " | " + lastSan);
+
+  // Update Game after HCP completes
+  var movePromise = mustSubmitOnHolochain?
+                      movePromise = hcp_commitMove(g_loadedChallengeHash, lastSan, moveCount)
+                    : Promise.resolve();
+  movePromise.then(function(hash)
+  {
+    updateGame(lastMove);
+    updateTurnColorLabel();  
+    myTurn = false;
+    if(mustSubmitOnHolochain)
+    {
+      updateLoadedGame();     
+    }
+  });
+}  
+
+
+/**
+ * SUBMIT BUTTON
+ */
+$('#submit-button').on('click', submitMove);
+
+
+/**
+ * CHALLENGE BUTTON = Submit Challenge Entry, 
+ * update my Games list and load newly created Game
+ */
+$("#challenge-button").on("click", function()
+{
+  hcp_commitChallenge(activeOpponentHash).then(function(challengeHash)
+  {
+    setSelectedPlayer(null);
+    getMyGames().then(function()
+    {
+      loadGame(challengeHash);
+    });    
+  });
+});    
+
+
+/**
+ * Update Player-Handles list
+ */
+var getAllHandles = function()
+{
+  hcp_getAllHandles().then(function(allHandlesArg)
+  {
+    updateOpponentList(allHandlesArg);
+  });  
+}
+
+
+/**
+ * Update Games list
+ */
+var getMyGames = function()
+{
+  return hcp_getMyGames().then(function()
+    {  
+      buildMyGamesUl(g_myGames);
+    })
+    .catch(function(err)
+    {
+      console.log("hcp_getMyGames failed: " + err);
+    });
+};
+
+
+/**
+ * Set selected player from Opponents list
+ * @param {hash} agentHash hash of agent to select
+ * can be null to deselect current selection
+ */
+var setSelectedPlayer = function(agentHash)
+{
+  activeOpponentHash = agentHash;  
+  $("#players li").removeClass("selection");
+  if(activeOpponentHash)
+  {
+    var elem = $("#players li[data-id=" + activeOpponentHash + "]");
+    $(elem).addClass("selection");
+  }
+  $('#challenge-button').prop("disabled", activeOpponentHash == null); 
+};
+
+
+/**
+ *  Select clicked handle
+ */
+$("#players").on("click", "li", function()
+{
+  setSelectedPlayer($(this).data('id'));
+}); 
+
+
+/**
+ * Set selected Game from MyGames list
+ * @param {hash} challengeHash hash of challenge to select
+ * can be null to deselect current selection
+ */ 
+var setSelectedGame = function(challengeHash)
+{
+  activeChallengeHash = challengeHash;       
+  $('#my-games li').removeClass("selection");        
+  if(activeChallengeHash)
+  {
+    var elem = $("#my-games li[data-id=" + activeChallengeHash + "]");
+    $(elem).addClass("selection"); 
+  }
+};
+
+
+/**
+ * Select clicked Game name
+ */
+$("#my-games").on("click", "li", function()
+{
+  cachedSanArray = null;
+  loadGame($(this).data('id'));
+});
+
+    
+//===============================================================================
+// Opponent List
+// ==============================================================================
+
+/**
+ * 
+ * @param {Array of handle_links} allHandles 
+ */
+var updateOpponentList = function(allHandles) 
+{
+  // Don't update if nothing has changed
+  if(isEqual(cachedHandles, allHandles))
+  {
+    return;
+  }
+  cachedHandles = allHandles;
+  $("#players").empty();
+  for (var x = 0; x < allHandles.length; x++) 
+  {
+    // Don't put myself in the list
+    if(allHandles[x].Hash == g_myHash)
+    {
+      continue;
+    }    
+    $("#players").append(makePlayerLi(allHandles[x]));
+  }
+  // Re-select active opponent
+  if(activeOpponentHash)
+  {
+    setSelectedPlayer(activeOpponentHash);
+  }
+}
+
+
+/**
+ * return html string of Player handle for an UL
+ * @param {handle_link} handleLink 
+ */
+var makePlayerLi = function(handleLink) 
+{
+  return  "<li data-id=\"" + handleLink.Hash + "\""
+        + "data-name=\"" + handleLink.Entry + "\">"
+        + handleLink.Entry
+        + "</li>";
+}
+
+
+//===============================================================================
+// GAMES / CHALLENGES
+// ==============================================================================
+
+/**
+ * 
+ */ 
+var updateTurnColorLabel = function()
+{
+  var turnText = '';
+  if(gameState === GAME_STATE_SANDBOX)
+  {
+    turnText = (canWhitePlay? 'White turn' : "Black turn");
+  }
+  else
+  {
+    if(myTurn !== null)
+    {
+      turnText = (myTurn? 'My turn' : challengeeHandle + "'s turn");       
+    }
+  }  
   turnColorEl.html(turnText);  
 };
 
 
-// Tell user whats going on
-var updateStatus = function() 
+/**
+ *  Tell user game state
+ */
+var updateGameStatusLabel = function() 
 {
   var status = '';
 
+  // Get turn color
   var moveColor = 'White';
   if (gameEngine.turn() === 'b')
   {
@@ -437,265 +768,6 @@ var updateStatus = function()
   // pgnEl.html(game.pgn());
 };
   
-
-
-// Buttons Behavior
-// ========================================================================
-
-/**
- * Set App state to APP_STATE_SANDBOX
- */
-$('#sandbox-button').on('click', function() 
-{
-  // First set state APP_STATE_EMPTY
-  resetApp();
-
-  mustSubmitOnHolochain = false;
-  canWhitePlay          = true;
-  lastSubmittedFen      = startingFen;
-        
-  board.start(); 
-  updateStatus();
-  updateTurnColor();  
-  challengeeHandle = '';  
-  GameTitleEl.html("sandbox");  
-  $('#reset-button').prop("disabled", false);
-  appState = APP_STATE_SANDBOX;    
-});
-
-
-/**
- * Set App state to APP_STATE_EMPTY
- */
-$('#reset-button').on('click', function()
-{
-  resetApp();
-  setSelectedGame(null);
-});
-
-/**
- * 
- * @param {*} ChallengeHashkey 
- */
-var loadGame = function(ChallengeHashkey)
-{
-  if(!ChallengeHashkey || ChallengeHashkey == undefined)
-  {
-    ChallengeHashkey = g_loadedChallengeHashkey;
-  }
-
-  return hcp_getMoves(ChallengeHashkey).then(function(sanArray)
-  {
-    if(sanArray && cachedSanArray && isEqual(sanArray, cachedSanArray))
-    {
-      return;
-    }
-
-     // First set app state to APP_STATE_EMPTY 
-    resetApp();
-    cachedSanArray = sanArray;    
-    canWhitePlay = true;
-
-    // Get Game
-    loadedGame = myGames[g_loadedChallengeHashkey];
-
-    // Go through all the moves
-    for(let i = 0; i < sanArray.length; i++)
-    {
-      console.log("\t" + i + ". " + sanArray[i]);
-      let move = gameEngine.move(sanArray[i]);            
-      if(move === null)
-      {
-        alert("invalid move:" + sanArray[i]);
-        break;
-      }
-      // undo-redo to get last Move object
-      let moveObj = gameEngine.undo();
-      gameEngine.move(moveObj);
-      updateGame(moveObj);
-    }
-    board_onSnapEnd();
-
-    if(!loadedGame.iPlayWhite)
-    {
-      console.log("\t\tBOARD FLIP");
-      board.orientation('black');
-    }
-
-    myTurn = (loadedGame.iPlayWhite && canWhitePlay ||
-              !loadedGame.iPlayWhite && !canWhitePlay);
-
-    canSubmit = myTurn;
-
-    // Update Html
-    challengeeHandle = (loadedGame.iAmChallenger? loadedGame.challengeeHandle : loadedGame.challengerHandle);                              
-    GameTitleEl.html(loadedGame.name);
-    $('#reset-button').prop("disabled", false);  
-    updateStatus();
-    updateTurnColor(); 
-  
-    setSelectedGame(ChallengeHashkey);
-
-    // Update state flag
-    appState = APP_STATE_CHALLENGE_VIEWING;
-  });
-};
-
-
-/**
- * 
- */
-$('#undo-button').on('click', function() 
-{
-  if(!canUndoMove)
-  {
-    return;
-  }
-
-  gameEngine.undo();
-  lastSubmittedFen = gameEngine.fen();            
-  $('#submit-button').prop("disabled", true);
-  $('#undo-button').prop("disabled", true);             
-  lastSubmittedMove = null;
-  canUndoMove = false;
-  board_onSnapEnd();
-});
-
-
-$('#submit-button').on('click', submitMove);
-
-
-$("#challenge-button").on("click", function()
-{
-  hcp_commitChallenge(activeOpponentHashkey).then(function(challengeHashkey)
-  {
-    // console.debug("new game: " + str);
-    setSelectedPlayer(null);
-    getMyGames().then(function()
-    {
-      loadGame(challengeHashkey);
-    });    
-  });
-});    
-
-
-/**
- * Update Handles list
- */
-var getAllHandles = function()
-{
-  hcp_getAllHandles().then(function(allHandlesArg)
-  {
-    updateOpponentList(allHandlesArg);
-  });  
-}
-
-
-/**
- * Update Games list
- */
-var getMyGames = function()
-{
-  return hcp_getMyGames().then(function()
-    {  
-      buildMyGamesUl(g_myGames);
-    })
-    .catch(function(err)
-    {
-      console.log("hcp_getMyGames failed: " + err);
-    });
-};
-
-
-/**
- * 
- * @param {*} agentHashkey 
- */
-var setSelectedPlayer = function(agentHashkey)
-{
-  activeOpponentHashkey = agentHashkey;  
-  $("#players li").removeClass("selection");
-  if(activeOpponentHashkey)
-  {
-    var elem = $("#players li[data-id=" + activeOpponentHashkey + "]");
-    $(elem).addClass("selection");
-  }
-  $('#challenge-button').prop("disabled", activeOpponentHashkey == null); 
-};
-
-
-// Select Opponent
-$("#players").on("click", "li", function()
-{
-  setSelectedPlayer($(this).data('id'));
-}); 
-
-
-// Select Game
-var setSelectedGame = function(challengeHashkey)
-{
-  activeChallengeHashkey = challengeHashkey;       
-  $('#my-games li').removeClass("selection");        
-  if(activeChallengeHashkey)
-  {
-    var elem = $("#my-games li[data-id=" + activeChallengeHashkey + "]");
-    $(elem).addClass("selection"); 
-  }
-};
-
-
-// Select Game
-$("#my-games").on("click", "li", function()
-{
-  cachedSanArray = null;
-  loadGame($(this).data('id'));
-});
-
-    
-//===============================================================================
-// OPPONENTS
-// ==============================================================================
-
-/**
- * 
- * @param {Array of handle_links} allHandles 
- */
-var updateOpponentList = function(allHandlesArg) 
-{
-  // Don't update if nothing has changed
-  if(isEqual(allHandles, allHandlesArg))
-  {
-    return;
-  }
-  allHandles = allHandlesArg;
-  $("#players").empty();
-  for (var x = 0; x < allHandles.length; x++) 
-  {
-    if(allHandles[x].Hash == g_myHash) // FIXME must get agent hash with that handle :(
-    {
-      continue;
-    }    
-    $("#players").append(makePlayerLi(allHandles[x]));
-  }
-}
-
-
-/**
- * return html string of Player handle for an UL
- * @param {Link} handleLink 
- */
-var makePlayerLi = function(handleLink) 
-{
-  return  "<li data-id=\"" + handleLink.Hash + "\""
-        + "data-name=\"" + handleLink.Entry + "\">"
-        + handleLink.Entry
-        + "</li>";
-}
-
-
-//===============================================================================
-// GAMES / CHALLENGES
-// ==============================================================================
 
 /**
  * Update Game state with new move
@@ -729,17 +801,18 @@ var updateGame = function(newMove)
 var buildMyGamesUl = function(gameArray)
 {
   // Check edge case: No games
-  if(!gameArray || gameArray === undefined || gameArray.length == 0)
+  if(!gameArray || gameArray === undefined || Object.keys(gameArray).length === 0)
   {
     myGamesUl.html("None");
     return;
   }
-  // Check if something changed
+  // End here if nothing changed
   if(isEqual(myGames, gameArray))
   {
     return;
   }
-  // Loop through games and create li per game
+
+  // Rebuild list by looping through games and create li per game
   myGames = gameArray;
   myGamesUl.empty();
   Object.keys(gameArray).forEach(function(key, index) 
@@ -750,21 +823,22 @@ var buildMyGamesUl = function(gameArray)
       + this[key].name
       + "</li>");
   }, gameArray);
+
   // Re-select active challenge
-  if(activeChallengeHashkey)
+  if(activeChallengeHash)
   {
-    setSelectedGame(activeChallengeHashkey);
+    setSelectedGame(activeChallengeHash);
   }  
 }
 
 
 /** 
- * Set App state to APP_STATE_EMPTY
+ * Set Game state to GAME_STATE_EMPTY
  */      
-var resetApp = function()
+var resetGamePanel = function()
 {
+  gameState             = GAME_STATE_EMPTY;     
   squareToHighlight     = null;
-  colorToHighlight      = null;
   hasProposedMove       = false;
   lastValidMove         = null;
   lastSubmittedMove     = null;
@@ -774,10 +848,9 @@ var resetApp = function()
   canSubmit             = false;
   mustSubmitOnHolochain = true;
   moveCount             = 0;
-
-  myTurn = null;
-  loadedGame = null;
-  cachedSanArray = null;
+  myTurn                = null;
+  loadedGame            = null;
+  cachedSanArray        = null;
 
   gameEngine.reset();
   board.clear();
@@ -789,21 +862,18 @@ var resetApp = function()
   removeHighlights('w');        
   logEl.empty();
   logEl.append("<tr><th>#</th><th>White</th><th>Black</th></tr>");
+  $('#challenge-button').prop("disabled", true);   
   $('#submit-button').prop("disabled", true);
   $('#undo-button').prop("disabled", true);
-  $('#reset-button').prop("disabled", true);  
-  $('#sandbox-button').prop("disabled", false);  
-
-  $('#load-game-button').prop("disabled", true); 
-  $('#challenge-button').prop("disabled", true); 
+  $('#reset-button').prop("disabled", true);     
+  $('#sandbox-button').prop("disabled", false);
 
   GameTitleEl.html("");
   challengeeHandle = '';
-  updateStatus();
-  updateTurnColor();
+  updateGameStatusLabel();
+  updateTurnColorLabel();
 
-  // Update state flag
-  appState = APP_STATE_EMPTY;    
+ 
 }
 
 
@@ -814,7 +884,7 @@ var updateLoadedGame = function()
 {
   if(loadedGame && !myTurn)
   {
-    const tmp = activeChallengeHashkey;
+    const tmp = activeChallengeHash;
     loadGame();
   }
 }  
@@ -843,14 +913,11 @@ var ChessboardConfig =
     // onMoveEnd    : board_onMoveEnd // not called because there are no animations
 };
 
+// Setup chess board and chess engine
 var board = Chessboard('#myBoard', ChessboardConfig);
-// Setup chess engine
 var gameEngine = new Chess();
 
-// var board = Chessboard('#myBoard2', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R')
-// var board = Chessboard('#myBoard', 'r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R')
-
-// Get data from HC
+// Setup data fetching from Holochain
 hcp_getMyHandle().then(function(myHandle)
 {
   myHandleEl.html("(" + myHandle + ")");
@@ -859,9 +926,10 @@ getAllHandles();
 setInterval(getAllHandles, 2000);
 getMyGames();
 setInterval(getMyGames, 2000);
-
 setInterval(updateLoadedGame, 2000);
 
-resetApp();
+// Reset Game state
+resetGamePanel();
+setSelectedPlayer(null);
 
 })() // end anonymous wrapper

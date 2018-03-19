@@ -1,42 +1,34 @@
 'use strict';
 
-// global const
+// ===============================================================================
+// CONST
+// ===============================================================================
+
 var APP_ID = App.DNA.Hash;
 var ME     = App.Key.Hash;
 
-var GAME_MAX_FULLMOVE     = 300; // arbitrary limit to game size
-
-var GAME_STATE_NULL               = 1 << 0;
-var GAME_STATE_CHALLENGE_PENDING  = 1 << 1;
-var GAME_STATE_ACTIVE             = 1 << 2;
-var GAME_STATE_FINISHED_WHITE_WIN = 1 << 3;
-var GAME_STATE_FINISHED_BLACK_WIN = 1 << 4;
-var GAME_STATE_FINISHED_DRAW      = 1 << 5;
-
 var SOURCE_AS_HASH = true;
+
+// NOT USED YET
+// var GAME_MAX_FULLMOVE     = 300; // arbitrary limit to game size - 
+// var GAME_STATE_NULL               = 1 << 0;
+// var GAME_STATE_CHALLENGE_PENDING  = 1 << 1;
+// var GAME_STATE_ACTIVE             = 1 << 2;
+// var GAME_STATE_FINISHED_WHITE_WIN = 1 << 3;
+// var GAME_STATE_FINISHED_BLACK_WIN = 1 << 4;
+// var GAME_STATE_FINISHED_DRAW      = 1 << 5;
+
 
 // ==============================================================================
 // EXPOSED Functions: visible to the UI, can be called via localhost, web browser, or socket
 // ===============================================================================
-
-/**
- *  return value of requested property
- */ 
-function getAppProperty(name)
-{            
-  if (name == "App_Agent_Hash")   { return App.Agent.Hash; }
-  if (name == "App_Agent_String") { return App.Agent.String; }
-  if (name == "App_Key_Hash")     { return App.Key.Hash; }
-  if (name == "App_DNA_Hash")     { return App.DNA.Hash; }
-  return ("Error: No App Property with name: " + name);
-}
 
 
 // HANDLES / AGENT
 // ==============================================================================
 
 /** 
- * return this agent's hashkey
+ * return this agent's hash
  */
 function getMyHash()
 {
@@ -45,56 +37,10 @@ function getMyHash()
 
 
 /**
- * Set new handle for self. 
- * Might replace previous handle if there is one.
- * FIXME handle: must be valid handle (alphanum?), and different from current
- * return new handle hashkey
- */
-function commitNewHandle(handle)
-{
-  // get all agent's previous handles
-  var handles = getHashkeysFromLinks(ME, "handle");
-
-  var n = handles.length - 1;
-  if (n < 0)
-  {
-    // No previous handle found
-    return commitFirstHandle(handle);    
-  }
-
-  // Agent has previous handles.
-  // Update previous handle
-  var previousHandleHashkey = handles[n];
-  var newHandleHashkey      = update("handle", handle, previousHandleHashkey);
-
-  debug("new handle: " + handle + " is " + newHandleHashkey);
-  debug("old handle: was " + previousHandleHashkey);
-
-  // Update links to previous handle
-  commit("handle_links",
-          {Links:[
-              {Base:ME, Link:previousHandleHashkey, Tag:"handle", LinkAction:HC.LinkAction.Del},
-              {Base:ME, Link:newHandleHashkey, Tag:"handle"}
-          ]});
-  commit("directory_links",
-          {Links:[
-              {Base:APP_ID, Link:previousHandleHashkey, Tag:"player", LinkAction:HC.LinkAction.Del},
-              {Base:APP_ID, Link:newHandleHashkey, Tag:"player"}
-          ]});
-
-  return newHandleHashkey;  
-}
-
-
-/**
- *  return array of user keys to handles
+ *  return array of handle_links with Agent's hash as key
  */ 
 function getAllHandles() 
 {
-  // if (property("enableDirectoryAccess") != "true") 
-  // {
-  //     return undefined;
-  // }
   var linkArray = getEntriesFromLinks(APP_ID, "player", SOURCE_AS_HASH);
   return (linkArray? linkArray : []);
 }
@@ -115,11 +61,11 @@ function getMyHandle()
 /**
  * return the handle of an agent
  */ 
-function getHandle(agentHashkey)
+function getHandle(agentHash)
 {
-  debug("getHandle: " + agentHashkey);
-  // FIXME : check valid agentHashkey?
-  var linkArray = getEntriesFromLinks(agentHashkey, "handle");
+  debug("getHandle: " + agentHash);
+  // FIXME : check valid agentHash?
+  var linkArray = getEntriesFromLinks(agentHash, "handle");
   if(!linkArray || linkArray.length != 1)
   {
     return [];
@@ -129,18 +75,26 @@ function getHandle(agentHashkey)
 
 
 /**
- *  return array of user keys to handles
- */ 
-function getAllPlayers() 
+ * commit initial handle and its links on the app's directory
+ */
+function commitInitialHandle(handle) 
 {
-  // if (property("enableDirectoryAccess") != "true") 
-  // {
-  //     return undefined;
-  // }
-  return getEntriesFromLinks(APP_ID, "player", SOURCE_AS_HASH);
+  // TODO confirm no collision?
+
+   // On my source chain, commit a new handle entry
+  var handleHash = commit("handle", handle);
+
+  debug("commitInitialHandle:" + handle + " stored at " + handleHash);
+
+  // On DHT, set links to my handle
+  commit("handle_links", {Links:[{Base:ME,Link:handleHash,Tag:"handle"}]});
+  commit("directory_links", {Links:[{Base:APP_ID,Link:handleHash,Tag:"player"}]});
+
+  return handleHash;
 }
 
 
+// 
 // HOLOCHESS
 // ==============================================================================
 
@@ -155,22 +109,22 @@ function commitChallenge(challenge)
   }
   challenge.challenger = ME;
   
-  debug("commitChallenge jsonMsg: "+ JSON.stringify(challenge));
+  debug("commitChallenge: "+ JSON.stringify(challenge));
   
   // commit challenge entry to my source chain
-  var challengeHashkey = commit('challenge', challenge);
+  var challengeHash = commit('challenge', challenge);
 
-  debug("new challenge: "+ challengeHashkey + "\n\t challenger: " + ME + "\n\t challengee  :" + challenge.challengee);
+  debug("new challenge: "+ challengeHash + "\n\t challenger: " + ME + "\n\t challengee  :" + challenge.challengee);
 
-  // On the DHT, put a link on my hashkey, and my opponents hashkey, to the new challenge.
-  commit("challenge_links", {Links:[{Base:ME, Link:challengeHashkey ,Tag:"initiated"}]});
-  commit("challenge_links", {Links:[{Base:challenge.challengee, Link:challengeHashkey,Tag:"received"}]});
-  return challengeHashkey;
+  // On the DHT, put a link on my hash, and my opponents hash, to the new challenge.
+  commit("challenge_links", {Links:[{Base:ME, Link:challengeHash ,Tag:"initiated"}]});
+  commit("challenge_links", {Links:[{Base:challenge.challengee, Link:challengeHash,Tag:"received"}]});
+  return challengeHash;
 }
 
 
 /**
- *  Create a Challenge Entry
+ *  Create a Move Entry
  */ 
 function commitMove(move)
 {
@@ -181,22 +135,22 @@ function commitMove(move)
   debug("new move on game: "+ move.gameHash + "\n\t san: " + move.san + " | " + move.index);
 
   // Build and commit move entry to my source chain  
-  var moveHashkey = commit('move', move);
-  debug("\tmove hashkey: " + moveHashkey);
-  // On the DHT, put a link on the challenge's hashkey to the new move.
-  commit("move_links", {Links:[{Base:move.gameHash,Link:moveHashkey,Tag:"halfmove"}]});
-  return moveHashkey;
+  var moveHash = commit('move', move);
+  debug("\tmove hash: " + moveHash);
+  // On the DHT, put a link on the challenge's hash to the new move.
+  commit("move_links", {Links:[{Base:move.gameHash,Link:moveHash,Tag:"halfmove"}]});
+  return moveHash;
 }
 
 
 /**
- *  return array of all moves of a game, in SAN strings
+ *  return array of strings of all the moves of the game, in SAN, sorted by index 
  */ 
-function getMoves(gameHashkey)
+function getMoves(challengeHash)
 {
   // getLinks from DHT
-  var moves = getEntriesFromLinks(gameHashkey, "halfmove");
-  debug("getMoves of game: " + gameHashkey + "\n\t moves found: " + moves.length);
+  var moves = getEntriesFromLinks(challengeHash, "halfmove");
+  debug("getMoves of challenge: " + challengeHash + "\n\t moves found: " + moves.length);
 
   // Sort by move index
   moves.sort(function (a, b) {return a.Entry.index - b.Entry.index;} );
@@ -214,24 +168,26 @@ function getMoves(gameHashkey)
 
 
 /**
- * Load Challenge from hashkey
+ * Load Challenge from its hash
  * return null if requested entry is not 'challenge' type 
  */
-function getChallenge(entryHashkey)
+function getChallenge(hash)
 {
-  debug("getChallenge called: " + entryHashkey);  
-  var challenge = get(entryHashkey);
+  debug("getChallenge called: " + hash);  
+  var challenge = get(hash);
   debug("Challenge: " + challenge);
+
+  // Return
   return JSON.parse(challenge);
-  //return challenge;
+  //return challenge; // Depends on Holochain version?
 }
 
 
 /**
  *  return array of entries of challenges that corresponds to query parameters
+ *  sorted by timestamp
  */ 
-//// function getGamesBy(stateMask, challenger, challengee)
-function getMyGames()
+function getMyGames(/* stateMask, challengerHash, challengeeHash */)
 {
   debug("getMyGames:");
   // getLinks from DHT
@@ -240,6 +196,10 @@ function getMyGames()
   debug("\t Initiated: " + initiatedChallenges.length + "  received: " + receivedChallenges.length);
   
   var myGames = initiatedChallenges.concat(receivedChallenges);
+
+  // Sort by timestamp
+  myGames.sort(function (a, b) {return b.Entry.timestamp - a.Entry.timestamp;} );
+
   return myGames;
 }
 
@@ -247,22 +207,6 @@ function getMyGames()
 // ==============================================================================
 // HELPERS: unexposed functions
 // ==============================================================================
-
-// commit first time handle and its links on the directory
-function commitFirstHandle(handle) 
-{
-  // TODO confirm no collision
-   // On my source chain, commit a new handle entry
-  var hashkey = commit("handle", handle);
-
-  debug(handle + " stored at " + hashkey);
-
-  // On DHT, set links to my handle
-  commit("handle_links", {Links:[{Base:ME,Link:hashkey,Tag:"handle"}]});
-  commit("directory_links", {Links:[{Base:APP_ID,Link:hashkey,Tag:"player"}]});
-
-  return hashkey;
-}
 
 
 // helper function to determine if value returned from holochain function is an error
@@ -273,7 +217,7 @@ function hasErrorOccurred(result)
 
 
 /**
- * Helper for the "getLinks" with Load call. 
+ * Helper for the "getLinks" with load call. 
  * Handle the no-link error case. 
  * Copy the returned entry values into a nicer array
  " @param canSourceBeHash if TRUE attribute Hash will be hash of the Source
@@ -308,11 +252,11 @@ function getEntriesFromLinks(base, tag, canSourceBeHash)
 
 
 /**
- * Helper for the "getLinks" without Load call. 
+ * Helper for the "getLinks" without load call. 
  * Handle the no links entry error
  * Build a simpler links array
  */
-function getHashkeysFromLinks(base, tag) 
+function getKeysFromLinks(base, tag) 
 {
   // Get the tag from the base in the DHT
   var links = getLinks(base, tag, {Load:false});
@@ -346,7 +290,7 @@ function getHashkeysFromLinks(base, tag)
  */
 function genesis()
 {
-  commitFirstHandle(App.Agent.String);
+  commitInitialHandle(App.Agent.String);
   return true;
 }
 
@@ -354,7 +298,6 @@ function genesis()
 // -----------------------------------------------------------------
 //  VALIDATION functions for every DHT entry change
 // -----------------------------------------------------------------
-
 
 /**
  * Validate Challenge Entry
@@ -393,6 +336,9 @@ function validateMove(entry, header, pkg, sources)
 }
 
 
+/**
+ * 
+ */
 function validateLink(linkEntryType, baseHash, links, pkg, sources)
 {
   debug("validate link: " + linkEntryType);
@@ -401,7 +347,9 @@ function validateLink(linkEntryType, baseHash, links, pkg, sources)
 }
 
 
-// Dispatcher
+/**
+ *  Commit validation dispatcher
+ */
 function validateCommit(entryType, entry, header, pkg, sources)
 {
   debug("validate commit: " + entryType);
@@ -424,6 +372,10 @@ function validateCommit(entryType, entry, header, pkg, sources)
   }
 }
 
+
+/**
+ * 
+ */
 function validatePut(entryType, entry, header, pkg, sources)
 {
   debug("validate put: " + entryType);  
@@ -442,7 +394,10 @@ function validatePut(entryType, entry, header, pkg, sources)
   }
 }
 
-// TODO: Add 'challenge accepted' flag
+
+/**
+ * TODO: Add 'challenge accepted' flag
+ */
 function validateMod(entryType, entry, header, replaces, pkg, sources)
 {
   debug("validate mod: " + entryType+" header:"+JSON.stringify(header)+" replaces:"+JSON.stringify(replaces));
@@ -461,7 +416,10 @@ function validateMod(entryType, entry, header, replaces, pkg, sources)
   }
 }
 
-// TODO: Possibility to remove challenge if it has not been accepted
+
+/**
+ * TODO: Possibility to remove challenge if it has not been accepted
+ */
 function validateDel(entryName,hash, pkg, sources)
 {
   debug("validate del: "+entry_type);  

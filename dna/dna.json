@@ -73,17 +73,11 @@
       "Functions": [
           {
             "Name": "getMyHash",
-            "Comment": "Get local Agent's hashkey",
+            "Comment": "Get local Agent's hash",
             "CallingType": "string",
             "Exposure":"public"
           },    		  
-          {
-            "Name": "getAllPlayers",
-            "Comment": "Get all known Players",
-            "CallingType": "json",
-            "Exposure":"public"
-          },
-		     {
+		      {
             "Name": "getHandle",
             "Comment": "Get Handle of an Agent",
             "CallingType": "string",
@@ -91,7 +85,7 @@
           },
           {
             "Name": "getMyHandle",
-            "Comment": "Get local Agent's hashkey",
+            "Comment": "Get local Agent's hash",
             "CallingType": "string",
             "Exposure":"public"
           },
@@ -109,7 +103,7 @@
           },
           {
             "Name": "getChallenge",
-            "Comment": "Get Challenge entry from hashkey",
+            "Comment": "Get Challenge entry from hash",
             "CallingType": "json",
             "Exposure": "public"
           },                                              
