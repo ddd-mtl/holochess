@@ -39,13 +39,6 @@
               "Sharing": "public"
           },
           {
-              "Name": "game_result",
-              "DataFormat": "json",              
-              "Comment": "NOT USED YET - Chess game closing entry",
-              "SchemaFile": "game_result.json",
-              "Sharing": "public"
-          },
-          {
               "Name": "handle_links",
               "DataFormat": "links",              
               "Base": "agent",
@@ -75,19 +68,7 @@
               "Base": "app",
               "Link": "agent",
               "Tags": ["player"]              
-          },                                
-          {
-              "Name": "history_link_base",
-              "DataFormat": "string",              
-              "Comment": "NOT USED YET",
-              "Sharing": "public"
-          },
-          {
-              "Name": "history_links",
-              "DataFormat": "links",              
-              "Comment": "NOT USED YET",
-              "Tags": [""]
-          }                
+          }              
       ],
       "Functions": [
           {
@@ -95,13 +76,7 @@
             "Comment": "Get local Agent's hashkey",
             "CallingType": "string",
             "Exposure":"public"
-          },
-          {
-            "Name": "getAgent",
-            "Comment": "NOT IMPLEMENTED - Get Agent entry from Handle",
-            "CallingType": "string",
-            "Exposure":"public"
-          },      		  
+          },    		  
           {
             "Name": "getAllPlayers",
             "Comment": "Get all known Players",
@@ -117,12 +92,6 @@
           {
             "Name": "getMyHandle",
             "Comment": "Get local Agent's hashkey",
-            "CallingType": "string",
-            "Exposure":"public"
-          },  
-          {
-            "Name": "setMyHandle",
-            "Comment": "NOT IMPLEMENTED - Commit local Agent's Handle Entry",
             "CallingType": "string",
             "Exposure":"public"
           },
@@ -161,13 +130,7 @@
             "Comment": "Get all Moves of a Challenge",
             "CallingType": "json",
             "Exposure":"public"
-          },                
-          {
-            "Name": "getGameHistory",
-            "Comment": "NOT IMPLEMENTED",
-            "CallingType": "json",
-            "Exposure":"public"
-          }                
+          }              
       ]
     }
   ]

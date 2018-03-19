@@ -614,11 +614,11 @@ var getMyGames = function()
 var setSelectedPlayer = function(agentHashkey)
 {
   activeOpponentHashkey = agentHashkey;  
-  $("#players li").removeClass("selected-player");
+  $("#players li").removeClass("selection");
   if(activeOpponentHashkey)
   {
     var elem = $("#players li[data-id=" + activeOpponentHashkey + "]");
-    $(elem).addClass("selected-player");
+    $(elem).addClass("selection");
   }
   $('#challenge-button').prop("disabled", activeOpponentHashkey == null); 
 };
@@ -635,11 +635,11 @@ $("#players").on("click", "li", function()
 var setSelectedGame = function(challengeHashkey)
 {
   activeChallengeHashkey = challengeHashkey;       
-  $('#my-games li').removeClass("selected-player");        
+  $('#my-games li').removeClass("selection");        
   if(activeChallengeHashkey)
   {
     var elem = $("#my-games li[data-id=" + activeChallengeHashkey + "]");
-    $(elem).addClass("selected-player"); 
+    $(elem).addClass("selection"); 
   }
 };
 
