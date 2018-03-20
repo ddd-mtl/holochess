@@ -5,39 +5,32 @@
 <img src="holochessZome.png" />
 
 
-### Main
+### Entries
 
-Handle: Agent's name
-
-Challenge: Chess game's initial challenge request
-
-Move: Chess move
+ - Handle: Agent's name
+ - Challenge: Chess game's initial challenge request
+ - Move: Chess move
 
 
 
 ### Links
 
-handle_links:
-  - Binds handle to agent, tag: "handle"
-challenge_links: 
+- handle_links:
+  - Binds handle to agent, tag: "handle"  
+- challenge_links: 
   - Binds challenge to challenger, tag: "initiated"
   - Binds challenge to challengee, tag: "received"
-
-move_links:
- - Binds move to challenge, tag: "halfmove"
-
-directory_links: 
+- move_links:
+  - Binds move to challenge, tag: "halfmove"
+- directory_links: 
   - Binds agent to App ("directory" anchor), tag: "player"
 
-### Anchors
-FIXME
-User directory:
-  - agent hashs linked to app hash
 
-  
 <br/>
 
 ## Order of events
+ 
+:warning: **DOCUMENTATION OUT OF DATE** :warning:
 
 1. Challenge an Opponent
 
@@ -76,6 +69,6 @@ Unit tests and scenarios are still in development and will not pass. :broken_hea
 
 ### Scenarios
 
-#### Scenario - One Move Game
+#### Scenario - One Move Challenge
 
 TODO
