@@ -1,29 +1,32 @@
-# Holochess
+# Holochess - 
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 
-**Code-Status**: Playable asynchronous chess games with no time limit.
+**Code-Status**: Playable asynchronous P2P chess games with no time limit.
 
-**P2P chess on holochain**
-Holochess is a work in progress, sample application built with holochain and javascript (jQuery).
+Holochess is a work in progress, sample application built with [Holochain](http://www.holochain.org) and javascript (jQuery).  
 It's purpose is to learn and experiment holochain app building.
 
-Chess logic is handled by [chess.js](https://github.com/jhlywa/chess.js)
-Board display is handled by [chessboard.js](https://github.com/oakmac/chessboardjs/)
+Chess logic is handled by [chess.js](https://github.com/jhlywa/chess.js)  
+Board display is handled by [chessboard.js](https://github.com/oakmac/chessboardjs/)  
 Overall UI is made with [Twitter Bootstrap v3.3.7](https://github.com/twbs/bootstrap)
 
 ## Screenshots
 
-<img src="hcc-sshot.png" width="80%" />
+<img src="hcc-sshot.png" />
 
 ## Installation & Usage
 
 Prerequiste: [Install holochain](https://github.com/metacurrency/holochain/#installation) on your machine and make sure you do the step to set the $GOPATH.
 
 
-To see Holochess in action, the fastest way is to locally run 2 instances of Holochess and your own Bootstrap server.  So download the latest release from [Holochess Release](https://github.com/ddd-mtl/holochess/releases), unzip it and make 2 copies of the contents into folders called holochess1 and holochess2.  Both folders will have a dna folder and a ui folder in each.
+To see Holochess in action, the fastest way is to locally run 2 instances of Holochess and your own Bootstrap server.  
+So download the latest release from [Holochess Release](https://github.com/ddd-mtl/holochess/releases), unzip it and make 2 copies of the contents into folders called *holochess1* and *holochess2*.  
+Both folders will have a dna folder and a ui folder in each.
 
-Firstly run the bootstrap server which will let each instance of Holochess know about its peers.  The ```bs```  command is part of the Holochain install.  If it doesn't work you probably need to set the $GO_PATH variable. (Soon we won't need this step)
+Firstly run the bootstrap server which will let each instance of Holochess know about its peers.  
+The ```bs```  command is part of the Holochain install.  
+If it doesn't work you probably need to set the $GO_PATH variable.
 ```
   bs
 ```
@@ -51,7 +54,9 @@ Now open a browser at http://localhost:3142/QmdfWYCujsbBDd5NwHMsBZtcEfb5yDFuZHSP
 ```doQmdfWYCujsbBDd5NwHMsBZtcEfb5yDFuZHSPphh9MdWyuU
   [{"Req":{"Version":1,"NodeID":"QmdfWYCujsbBDd5NwHMsBZtcEfb5yDFuZHSPphh9MdWyuU","NodeAddr":"/ip4/0.0.0.0/tcp/6003"},"Remote":"[::1]:63187","LastSeen":"2018-03-11T12:32:15.659887156+11:00"},{"Req":{"Version":1,"NodeID":"QmdfWYCujsbBDd5NwHMsBZtcEfb5yDFuZHSPphh9MdWyuU","NodeAddr":"/ip4/0.0.0.0/tcp/6002"},"Remote":"[::1]:63153","LastSeen":"2018-03-11T12:28:40.85765899+11:00"}]
 ```
-Now open a browser to http://localhost:3141 and you will see Holochess.  Open another tab to http://localhost:4141 and you now have 2 instances of Holochess that can interact.  Challenge an opponent to create a game and submit your move to start P2P madness.
+Now open a browser to http://localhost:3141 and you will see Holochess.  
+Open another tab to http://localhost:4141 and you now have 2 instances of Holochess that can interact.  
+Challenge an opponent to create a game and submit your move to start P2P madness.
 
 
 
@@ -74,17 +79,14 @@ Now open a browser to http://localhost:3141 and you will see Holochess.  Open an
 
 
 
-# Holochess development
+## Development
 
-## Design
+### Design
 
-See /specs for in depth design / architecture document
+See /specs for in depth design & architecture documentation
 
-### Zome
 
-<img src="specs/holochessZome.png" width="80%" />
-
-## Tests
+### Tests
 To run all the stand alone DNA tests:
 
 ``` shell
@@ -93,11 +95,6 @@ hcdev test
 
 Unit tests and scenarios are still in development and will not pass. :broken_heart:
 
-### Scenarios
-
-#### Scenario - One Move Game
-
-TODO
 
 ## License
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)

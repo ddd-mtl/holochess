@@ -1,5 +1,41 @@
 # Holochess Architecture
 
+## DNA
+
+<img src="specs/holochessZome.png" />
+
+
+### Main
+
+Handle: Agent's name
+
+Challenge: Chess game's initial challenge request
+
+Move: Chess move
+
+
+
+### Links
+
+handle_links:
+  - Binds handle to agent, tag: "handle"
+challenge_links: 
+  - Binds challenge to challenger, tag: "initiated"
+  - Binds challenge to challengee, tag: "received"
+
+move_links:
+ - Binds move to challenge, tag: "halfmove"
+
+directory_links: 
+  - Binds agent to App ("directory" anchor), tag: "player"
+
+### Anchors
+FIXME
+User directory:
+  - agent hashs linked to app hash
+
+  
+
 ## Order of events
 
 1. Challenge an Opponent
@@ -31,33 +67,13 @@ Send a challenge request to an opponent. Fields:
 Opponent must accept challenge, otherwise challenger can delete his challenge.
 
 
-# DNA
 
-## Main
+## Tests
 
-Handle: Agent's name
+Unit tests and scenarios are still in development and will not pass. :broken_heart:
 
-Challenge: Chess game's initial challenge request
+### Scenarios
 
-Move: Chess move
+#### Scenario - One Move Game
 
-
-
-## Links
-
-handle_links:
-  - Binds handle to agent, tag: "handle"
-challenge_links: 
-  - Binds challenge to challenger, tag: "initiated"
-  - Binds challenge to challengee, tag: "received"
-
-move_links:
- - Binds move to challenge, tag: "halfmove"
-
-directory_links: 
-  - Binds agent to App ("directory" anchor), tag: "player"
-
-## Anchors
-FIXME
-User directory:
-  - agent hashs linked to app hash
+TODO
