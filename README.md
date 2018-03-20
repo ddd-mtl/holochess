@@ -1,4 +1,4 @@
-# Holochess - 
+# Holochess
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 
@@ -20,11 +20,11 @@ Overall UI is made with [Twitter Bootstrap v3.3.7](https://github.com/twbs/boots
 Prerequiste: [Install holochain](https://github.com/metacurrency/holochain/#installation) on your machine and make sure you do the step to set the $GOPATH.
 
 
-To see Holochess in action, the fastest way is to locally run 2 instances of Holochess and your own Bootstrap server.  
-So download the latest release from [Holochess Release](https://github.com/ddd-mtl/holochess/releases), unzip it and make 2 copies of the contents into folders called *holochess1* and *holochess2*.  
-Both folders will have a dna folder and a ui folder in each.
-
-Firstly run the bootstrap server which will let each instance of Holochess know about its peers.  
+To see Holochess in action, the fastest way is to locally run 2 instances of Holochess and your own Bootstrap server:  
+ - Download the latest release from [Holochess Release](https://github.com/ddd-mtl/holochess/releases)
+ - unzip it and make 2 copies of the contents into folders called *holochess1* and *holochess2*. Both folders will have a dna folder and a ui folder in each.
+ 
+Run the bootstrap server which will let each instance of Holochess know about its peers.  
 The ```bs```  command is part of the Holochain install.  
 If it doesn't work you probably need to set the $GO_PATH variable.
 ```
@@ -55,12 +55,14 @@ Now open a browser at http://localhost:3142/QmdfWYCujsbBDd5NwHMsBZtcEfb5yDFuZHSP
   [{"Req":{"Version":1,"NodeID":"QmdfWYCujsbBDd5NwHMsBZtcEfb5yDFuZHSPphh9MdWyuU","NodeAddr":"/ip4/0.0.0.0/tcp/6003"},"Remote":"[::1]:63187","LastSeen":"2018-03-11T12:32:15.659887156+11:00"},{"Req":{"Version":1,"NodeID":"QmdfWYCujsbBDd5NwHMsBZtcEfb5yDFuZHSPphh9MdWyuU","NodeAddr":"/ip4/0.0.0.0/tcp/6002"},"Remote":"[::1]:63153","LastSeen":"2018-03-11T12:28:40.85765899+11:00"}]
 ```
 Now open a browser to http://localhost:3141 and you will see Holochess.  
-Open another tab to http://localhost:4141 and you now have 2 instances of Holochess that can interact.  
-Challenge an opponent to create a game and submit your move to start P2P madness.
+Open another tab to http://localhost:4141 to see the second instance.  
+Each instance should see the other agent's name in the *Players* list.  
+You now have 2 instances of Holochess that can interact.  
+Challenge an opponent to create a game and submit your move to start a P2P chess game!
 
 
 
-## Feature Roadmap and Current Progress
+## Feature Roadmap
  - [x] Set default handle from AgentID string
  - [x] View all player handles
  - [x] View all my games
@@ -72,7 +74,7 @@ Challenge an opponent to create a game and submit your move to start P2P madness
  - [ ] Search and view any public game  
  - [ ] Game scrubbing & playback 
  - [ ] User profile (first name, last name, location, picture, website, etc.)
- - [ ] User UI preferences (background color, board colors, chess piece set, etc)
+ - [ ] User UI preferences (background color, board colors, chess piece set, etc.)
  - [ ] Integrate with DPKI for bridging app contexts
  - [ ] Integrate with chat for bridging app contexts
  - [ ] Time sensitive chess games
@@ -94,6 +96,11 @@ hcdev test
 ```
 
 Unit tests and scenarios are still in development and will not pass. :broken_heart:
+
+## Feedback
+
+Any feedback is welcome.
+Find me on [Holochain's Mattermost](http://chat.holochain.org). My handle is @damien
 
 
 ## License

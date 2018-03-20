@@ -2,7 +2,7 @@
 
 ## DNA
 
-<img src="specs/holochessZome.png" />
+<img src="holochessZome.png" />
 
 
 ### Main
@@ -35,6 +35,7 @@ User directory:
   - agent hashs linked to app hash
 
   
+<br/>
 
 ## Order of events
 
@@ -67,6 +68,7 @@ Send a challenge request to an opponent. Fields:
 Opponent must accept challenge, otherwise challenger can delete his challenge.
 
 
+<br/>
 
 ## Tests
 
