@@ -6,7 +6,7 @@
 
 // start anonymous scope
 ;(function () {
-'use strict'
+'use strict';
 
 // CONSTANTS
 var startingFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -20,7 +20,6 @@ var GAME_STATE_CHALLENGE_PLAYING = 1 << 4;
 
 // Html Elements
 var turnColorEl      = $('#turn-color');
-var turnStatusEl     = $('#turn-status');
 var boardStatusEl    = $('#board-status');
 var myHandleEl       = $('#my-handle');
 var boardEl          = $('#myBoard');
@@ -37,7 +36,7 @@ var lastValidMove;
 var lastSubmittedMove;
 var canWhitePlay;
 var lastSubmittedFen;
-var canUndoMove;    
+var canUndoMove;
 var mustSubmitOnHolochain; // true if game state required submission
 var canSubmit;             // can this player submit a move
 var loadedGame;
@@ -70,10 +69,10 @@ var removeHighlights = function(color)
 /**
  * Compare array of objects
  */
-var isEqual = function (value, other) 
+var isEqual = function (value, other)
 {
 	// Get the value type
-	var type = Object.prototype.toString.call(value);
+    let type = Object.prototype.toString.call(value);
 
 	// If the two objects are not the same type, return false
   if (type !== Object.prototype.toString.call(other))
@@ -82,29 +81,29 @@ var isEqual = function (value, other)
   }
 
 	// If items are not an object or array, return false
-  if (['[object Array]', '[object Object]'].indexOf(type) < 0) 
+  if (['[object Array]', '[object Object]'].indexOf(type) < 0)
   {
     return false;
   }
 
 	// Compare the length of the length of the two items
-	var valueLen = type === '[object Array]' ? value.length : Object.keys(value).length;
-	var otherLen = type === '[object Array]' ? other.length : Object.keys(other).length;
+    let valueLen = type === '[object Array]' ? value.length : Object.keys(value).length;
+    let otherLen = type === '[object Array]' ? other.length : Object.keys(other).length;
   if (valueLen !== otherLen)
   {
     return false;
   }
 
 	// Compare two items
-  var compare = function(item1, item2) 
+  var compare = function(item1, item2)
   {
 		// Get the object type
-		var itemType = Object.prototype.toString.call(item1);
+      let itemType = Object.prototype.toString.call(item1);
 
 		// If an object or array, compare recursively
     if (['[object Array]', '[object Object]'].indexOf(itemType) >= 0)
     {
-      if (!isEqual(item1, item2)) 
+      if (!isEqual(item1, item2))
       {
         return false;
       }
@@ -132,12 +131,12 @@ var isEqual = function (value, other)
 	// Compare properties
   if (type === '[object Array]')
   {
-    for (var i = 0; i < valueLen; i++)
+    for (let i = 0; i < valueLen; i++)
     {
 			if (compare(value[i], other[i]) === false) return false;
 		}
 	} else {
-    for (var key in value)
+    for (let key in value)
     {
 			if (value.hasOwnProperty(key)) {
 				if (compare(value[key], other[key]) === false) return false;
@@ -156,14 +155,14 @@ var isEqual = function (value, other)
 /**
  * only pick up pieces if game not over and for the side to move
  */
-var board_onDragStart = function(source, piece, position, orientation) 
+var board_onDragStart = function(source, piece, position, orientation)
 {
-  if (gameEngine.game_over() === true                         
+  if (gameEngine.game_over() === true
       // || (game.turn() === 'w' && piece.search(/^b/) !== -1)
       // || (game.turn() === 'b' && piece.search(/^w/) !== -1)
       // || (game.turn() === 'w' && !canWhitePlay)
-      // || (game.turn() === 'b' && canWhitePlay)            
-      ) 
+      // || (game.turn() === 'b' && canWhitePlay)
+      )
   {
       return false;
   }
@@ -172,37 +171,37 @@ var board_onDragStart = function(source, piece, position, orientation)
 
 /**
  * Process move on drop
- * @param {square coordinate string} source 
- * @param {square coordinate string} target 
+ * @param {string} source coordinate
+ * @param {string} target coordinate
  */
-var board_onDrop = function(source, target) 
+var board_onDrop = function(source, target)
 {
 
-  // Revert displacement if wrong color is played  
+  // Revert displacement if wrong color is played
   const sourcePiece = gameEngine.get(source);
-  if(sourcePiece !== null 
+  if(sourcePiece !== null
       && (sourcePiece.color === 'b' && canWhitePlay === true
           || sourcePiece.color === 'w' && canWhitePlay !== true)
   )
   {
-    return 'snapback'; 
+    return 'snapback';
   }
 
   // create Move
-  var moveOrder = 
+    let moveOrder =
   {
     from:       source,
     to:         target,
     promotion:  'q'     // FIXME: always promoting to Queen
   };
 
-  const turnColor   = gameEngine.turn();  
+  const turnColor   = gameEngine.turn();
   squareToHighlight = moveOrder.to;
 
   // try move
-  var move = gameEngine.move(moveOrder);
+  let move = gameEngine.move(moveOrder);
 
-  // check if move order was illegal 
+  // check if move order was illegal
   // and try from moved piece's previous position
   if (move === null)
   {
@@ -211,15 +210,15 @@ var board_onDrop = function(source, target)
     {
       return 'snapback';
     }
-    // can't try if last move is same color            
+    // can't try if last move is same color
     if(sourcePiece !== null && sourcePiece.color === turnColor)
     {
       return 'snapback';
     }
 
     // try undoing previous move and doing new move (different piece)
-    var undoneMove = gameEngine.undo();
-    move           = gameEngine.move(moveOrder)
+    let undoneMove = gameEngine.undo();
+    move           = gameEngine.move(moveOrder);
     if(move === null)
     {
       // there was no previous move
@@ -237,7 +236,7 @@ var board_onDrop = function(source, target)
       }
 
       // try from previous move's "from" position
-      const moveOrderAlt = 
+      const moveOrderAlt =
       {
         from:       undoneMove.from,
         to:         target,
@@ -245,17 +244,17 @@ var board_onDrop = function(source, target)
       };
 
       console.log('Alt: ' + moveOrderAlt.from + '-' + moveOrderAlt.to);
-      move = gameEngine.move(moveOrderAlt);                
+      move = gameEngine.move(moveOrderAlt);
       if (move === null)
       {
-        // Maybe failed because trying to put piece back to origin                  
+        // Maybe failed because trying to put piece back to origin
         if (moveOrderAlt.from !== moveOrderAlt.to)
         {
           lastValidMove = gameEngine.move(undoneMove);
-          return 'snapback';   
-        }             
+          return 'snapback';
+        }
       }
-    }   
+    }
   }
 
   // Move was valid update Game Panel state
@@ -264,12 +263,12 @@ var board_onDrop = function(source, target)
   canUndoMove   = true;
   lastValidMove = move;
 
-  const fen = gameEngine.fen();      
+  const fen = gameEngine.fen();
   $('#submit-button').prop("disabled", true);
   if(lastSubmittedFen !== fen)
   {
     if(mustSubmitOnHolochain && canSubmit)
-    {    
+    {
       $('#submit-button').prop("disabled", false);
     }
   }
@@ -280,9 +279,9 @@ var board_onDrop = function(source, target)
   $('#undo-button').prop("disabled", !canUndoMove);
 
   // highlight move
-  const highlightColor = (canWhitePlay? 'w' : 'b');        
-  removeHighlights(highlightColor);        
-  console.log(moveOrder.from +'-' + moveOrder.to + ' | ' + highlightColor);        
+  const highlightColor = (canWhitePlay? 'w' : 'b');
+  removeHighlights(highlightColor);
+  console.log(moveOrder.from +'-' + moveOrder.to + ' | ' + highlightColor);
   boardEl.find('.square-' + source).addClass('highlight-' + highlightColor);
   boardEl.find('.square-' + target).addClass('highlight-' + highlightColor);
 
@@ -299,7 +298,7 @@ var board_onDrop = function(source, target)
  * update board display
  * Done after the piece snap because of castling, en passant and pawn promotion
  */
-var board_onSnapEnd = function() 
+var board_onSnapEnd = function()
 {
   console.log("board_onSnapEnd: " + gameEngine.fen());
   board.position(gameEngine.fen());
@@ -310,7 +309,7 @@ var board_onSnapEnd = function()
 /**
  * Highlight squares
  */
-var board_onMoveEnd = function() 
+var board_onMoveEnd = function()
 {
   console.log(squareToHighlight + ' into ' + (canWhitePlay? 'w' : 'b') + ' || '+ '.square-' + squareToHighlight);
   boardEl.find('.square-' + squareToHighlight).addClass('highlight-' + canWhitePlay? 'w' : 'b');
@@ -318,7 +317,7 @@ var board_onMoveEnd = function()
 
 
 /**
- * 
+ *
  */
 var removeGreySquares = function()
 {
@@ -327,13 +326,13 @@ var removeGreySquares = function()
 
 
 /**
- * 
- * @param {coordinate} square 
+ *
+ * @param {String} square (coordinate)
  */
 var greySquare = function(square)
 {
-  var squareEl = $('#myBoard .square-' + square);        
-  var background = '#a9a9a9';
+  let squareEl = $('#myBoard .square-' + square);
+  let background = '#a9a9a9';
   if (squareEl.hasClass('black-3c85d') === true)
   {
       background = '#696969';
@@ -345,8 +344,8 @@ var greySquare = function(square)
 
 /**
  * Apply grey filter On hovered square
- * @param {*} square 
- * @param {*} piece 
+ * @param {*} square
+ * @param {*} piece
  */
 var board_onMouseoverSquare = function(square, piece)
 {
@@ -358,7 +357,7 @@ var board_onMouseoverSquare = function(square, piece)
   // });
 
   // // exit if there are no moves available for this square
-  // if (moves.length === 0) 
+  // if (moves.length === 0)
   // {
   //     return;
   // }
@@ -375,9 +374,9 @@ var board_onMouseoverSquare = function(square, piece)
 
 
 /**
- * 
- */       
-var board_onMouseoutSquare = function(square, piece) 
+ *
+ */
+var board_onMouseoutSquare = function(square, piece)
 {
   removeGreySquares();
 };
@@ -390,24 +389,24 @@ var board_onMouseoutSquare = function(square, piece)
 /**
  * SANDBOX BUTTON = Set Game state to GAME_STATE_SANDBOX
  */
-$('#sandbox-button').on('click', function() 
+$('#sandbox-button').on('click', function()
 {
   // First set state GAME_STATE_EMPTY
   resetGamePanel();
 
   // Setup sandbox
-  gameState             = GAME_STATE_SANDBOX;  
+  gameState             = GAME_STATE_SANDBOX;
   mustSubmitOnHolochain = false;
   canWhitePlay          = true;
   lastSubmittedFen      = startingFen;
 
-  board.start(); 
+  board.start();
   updateGameStatusLabel();
-  updateTurnColorLabel();  
-  challengeeHandle = '';  
-  GameTitleEl.html("sandbox");  
+  updateTurnColorLabel();
+  challengeeHandle = '';
+  GameTitleEl.html("sandbox");
   $('#reset-button').prop("disabled", false);
-   
+
 });
 
 
@@ -422,13 +421,13 @@ $('#reset-button').on('click', function()
 
 
 /**
- * 
- * @param {*} ChallengeHash 
+ *
+ * @param {*} challengeHash
  */
 var loadGame = function(challengeHash)
 {
   // if no input, reload current game
-  if(!challengeHash || challengeHash == undefined)
+  if(!challengeHash || challengeHash === undefined)
   {
     challengeHash = g_loadedChallengeHash;
   }
@@ -448,7 +447,7 @@ var loadGame = function(challengeHash)
     gameState      = GAME_STATE_CHALLENGE_VIEWING;
     cachedSanArray = sanArray;
     canWhitePlay   = true;
-    
+
     // Get Game
     loadedGame = g_myGames[g_loadedChallengeHash]; // FIXME Game might not be ready to display
 
@@ -456,7 +455,7 @@ var loadGame = function(challengeHash)
     for(let i = 0; i < sanArray.length; i++)
     {
       console.log("\t" + i + ". " + sanArray[i]);
-      let move = gameEngine.move(sanArray[i]);            
+      let move = gameEngine.move(sanArray[i]);
       if(move === null)
       {
         alert("invalid move:" + sanArray[i]);
@@ -482,12 +481,12 @@ var loadGame = function(challengeHash)
     canSubmit = myTurn;
 
     // Update Html
-    challengeeHandle = (loadedGame.iAmChallenger? loadedGame.challengeeHandle : loadedGame.challengerHandle);                              
+    challengeeHandle = (loadedGame.iAmChallenger? loadedGame.challengeeHandle : loadedGame.challengerHandle);
     GameTitleEl.html(loadedGame.name);
-    $('#reset-button').prop("disabled", false);  
+    $('#reset-button').prop("disabled", false);
     updateGameStatusLabel();
-    updateTurnColorLabel(); 
-  
+    updateTurnColorLabel();
+
     setSelectedGame(challengeHash);
   });
 };
@@ -496,7 +495,7 @@ var loadGame = function(challengeHash)
 /**
  * UNDO BUTTON
  */
-$('#undo-button').on('click', function() 
+$('#undo-button').on('click', function()
 {
   if(!canUndoMove)
   {
@@ -504,9 +503,9 @@ $('#undo-button').on('click', function()
   }
 
   gameEngine.undo();
-  lastSubmittedFen = gameEngine.fen();            
+  lastSubmittedFen = gameEngine.fen();
   $('#submit-button').prop("disabled", true);
-  $('#undo-button').prop("disabled", true);             
+  $('#undo-button').prop("disabled", true);
   lastSubmittedMove = null;
   canUndoMove = false;
   board_onSnapEnd();
@@ -514,16 +513,16 @@ $('#undo-button').on('click', function()
 
 
 /**
- * 
+ *
  */
-var submitMove = function() 
+var submitMove = function()
 {
   canUndoMove       = false;
   lastSubmittedMove = lastValidMove;
 
   lastSubmittedFen = gameEngine.fen();
   $('#submit-button').prop("disabled", true);
-  $('#undo-button').prop("disabled", true); 
+  $('#undo-button').prop("disabled", true);
 
   // undo-redo to get last Move object
   const lastMove = gameEngine.undo();
@@ -533,20 +532,20 @@ var submitMove = function()
   console.log("Submit Move: " + lastSubmittedMove + " | " + lastSan);
 
   // Update Game after HCP completes
-  var movePromise = mustSubmitOnHolochain?
-                      movePromise = hcp_commitMove(g_loadedChallengeHash, lastSan, moveCount)
+  let movePromise = mustSubmitOnHolochain?
+                      hcp_commitMove(g_loadedChallengeHash, lastSan, moveCount)
                     : Promise.resolve();
   movePromise.then(function(hash)
   {
     updateGame(lastMove);
-    updateTurnColorLabel();  
+    updateTurnColorLabel();
     myTurn = false;
     if(mustSubmitOnHolochain)
     {
-      updateLoadedGame();     
+      updateLoadedGame();
     }
   });
-}  
+};
 
 
 /**
@@ -556,7 +555,7 @@ $('#submit-button').on('click', submitMove);
 
 
 /**
- * CHALLENGE BUTTON = Submit Challenge Entry, 
+ * CHALLENGE BUTTON = Submit Challenge Entry,
  * update my Games list and load newly created Game
  */
 $("#challenge-button").on("click", function()
@@ -567,9 +566,9 @@ $("#challenge-button").on("click", function()
     getMyGames().then(function()
     {
       loadGame(challengeHash);
-    });    
+    });
   });
-});    
+});
 
 
 /**
@@ -580,8 +579,8 @@ var getAllHandles = function()
   hcp_getAllHandles().then(function(allHandlesArg)
   {
     updateOpponentList(allHandlesArg);
-  });  
-}
+  });
+};
 
 
 /**
@@ -590,7 +589,7 @@ var getAllHandles = function()
 var getMyGames = function()
 {
   return hcp_getMyGames().then(function()
-    {  
+    {
       buildMyGamesUl(g_myGames);
     })
     .catch(function(err)
@@ -607,14 +606,14 @@ var getMyGames = function()
  */
 var setSelectedPlayer = function(agentHash)
 {
-  activeOpponentHash = agentHash;  
+  activeOpponentHash = agentHash;
   $("#players li").removeClass("selection");
   if(activeOpponentHash)
   {
-    var elem = $("#players li[data-id=" + activeOpponentHash + "]");
+    let elem = $("#players li[data-id=" + activeOpponentHash + "]");
     $(elem).addClass("selection");
   }
-  $('#challenge-button').prop("disabled", activeOpponentHash == null); 
+  $('#challenge-button').prop("disabled", activeOpponentHash == null);
 };
 
 
@@ -624,22 +623,22 @@ var setSelectedPlayer = function(agentHash)
 $("#players").on("click", "li", function()
 {
   setSelectedPlayer($(this).data('id'));
-}); 
+});
 
 
 /**
  * Set selected Game from MyGames list
  * @param {hash} challengeHash hash of challenge to select
  * can be null to deselect current selection
- */ 
+ */
 var setSelectedGame = function(challengeHash)
 {
-  activeChallengeHash = challengeHash;       
-  $('#my-games li').removeClass("selection");        
+  activeChallengeHash = challengeHash;
+  $('#my-games li').removeClass("selection");
   if(activeChallengeHash)
   {
-    var elem = $("#my-games li[data-id=" + activeChallengeHash + "]");
-    $(elem).addClass("selection"); 
+    let elem = $("#my-games li[data-id=" + activeChallengeHash + "]");
+    $(elem).addClass("selection");
   }
 };
 
@@ -653,16 +652,16 @@ $("#my-games").on("click", "li", function()
   loadGame($(this).data('id'));
 });
 
-    
+
 //===============================================================================
 // Opponent List
 // ==============================================================================
 
 /**
- * 
- * @param {Array of handle_links} allHandles 
+ *
+ * @param {Array} allHandles (Array of handle_links)
  */
-var updateOpponentList = function(allHandles) 
+var updateOpponentList = function(allHandles)
 {
   // Don't update if nothing has changed
   if(isEqual(cachedHandles, allHandles))
@@ -671,13 +670,13 @@ var updateOpponentList = function(allHandles)
   }
   cachedHandles = allHandles;
   $("#players").empty();
-  for (var x = 0; x < allHandles.length; x++) 
+  for (let x = 0; x < allHandles.length; x++)
   {
     // Don't put myself in the list
-    if(allHandles[x].Hash == g_myHash)
+    if(allHandles[x].Hash === g_myHash)
     {
       continue;
-    }    
+    }
     $("#players").append(makePlayerLi(allHandles[x]));
   }
   // Re-select active opponent
@@ -685,20 +684,20 @@ var updateOpponentList = function(allHandles)
   {
     setSelectedPlayer(activeOpponentHash);
   }
-}
+};
 
 
 /**
  * return html string of Player handle for an UL
- * @param {handle_link} handleLink 
+ * @param {Object} handleLink
  */
-var makePlayerLi = function(handleLink) 
+var makePlayerLi = function(handleLink)
 {
   return  "<li data-id=\"" + handleLink.Hash + "\""
         + "data-name=\"" + handleLink.Entry + "\">"
         + handleLink.Entry
         + "</li>";
-}
+};
 
 
 //===============================================================================
@@ -706,11 +705,11 @@ var makePlayerLi = function(handleLink)
 // ==============================================================================
 
 /**
- * 
- */ 
+ *
+ */
 var updateTurnColorLabel = function()
 {
-  var turnText = '';
+  let turnText = '';
   if(gameState === GAME_STATE_SANDBOX)
   {
     turnText = (canWhitePlay? 'White turn' : "Black turn");
@@ -719,22 +718,22 @@ var updateTurnColorLabel = function()
   {
     if(myTurn !== null)
     {
-      turnText = (myTurn? 'My turn' : challengeeHandle + "'s turn");       
+      turnText = (myTurn? 'My turn' : challengeeHandle + "'s turn");
     }
-  }  
-  turnColorEl.html(turnText);  
+  }
+  turnColorEl.html(turnText);
 };
 
 
 /**
  *  Tell user game state
  */
-var updateGameStatusLabel = function() 
+var updateGameStatusLabel = function()
 {
-  var status = '';
+  let status = '';
 
   // Get turn color
-  var moveColor = 'White';
+  let moveColor = 'White';
   if (gameEngine.turn() === 'b')
   {
     moveColor = 'Black';
@@ -764,11 +763,11 @@ var updateGameStatusLabel = function()
   // fenEl.html(game.fen());
   // pgnEl.html(game.pgn());
 };
-  
+
 
 /**
  * Update Game state with new move
- * @param {moveObject} newMove 
+ * @param {Object} newMove
  */
 var updateGame = function(newMove)
 {
@@ -779,21 +778,21 @@ var updateGame = function(newMove)
   const fullMoveCount = Math.floor(moveCount / 2);
 
   // Update log UI
-  var moveLogItem = "<td>" + newMove.from +'-' + newMove.to + "</td>";   
-  if(gameEngine.turn() == 'b') // if current turn is black, that means white has played
-  {            
+  let moveLogItem = "<td>" + newMove.from +'-' + newMove.to + "</td>";
+  if(gameEngine.turn() === 'b') // if current turn is black, that means white has played
+  {
     logEl.append("<tr class=\"ch-move-" + fullMoveCount + "\"><td>" + fullMoveCount + "</td>" + moveLogItem + "</tr>");
   }
   else
   {
     logEl.find(".ch-move-" + (fullMoveCount - 1)).append(moveLogItem);
-  } 
-}
+  }
+};
 
 
 /**
- * 
- * @param {*} gameArray 
+ *
+ * @param {*} gameArray
  */
 var buildMyGamesUl = function(gameArray)
 {
@@ -812,7 +811,7 @@ var buildMyGamesUl = function(gameArray)
   // Rebuild list by looping through games and create li per game
   myGames = gameArray;
   myGamesUl.empty();
-  Object.keys(gameArray).forEach(function(key, index) 
+  Object.keys(gameArray).forEach(function(key, index)
   {
     myGamesUl.append(
         "<li data-id=\"" + key + "\""
@@ -825,16 +824,16 @@ var buildMyGamesUl = function(gameArray)
   if(activeChallengeHash)
   {
     setSelectedGame(activeChallengeHash);
-  }  
-}
+  }
+};
 
 
-/** 
+/**
  * Set Game state to GAME_STATE_EMPTY
- */      
+ */
 var resetGamePanel = function()
 {
-  gameState             = GAME_STATE_EMPTY;     
+  gameState             = GAME_STATE_EMPTY;
   squareToHighlight     = null;
   hasProposedMove       = false;
   lastValidMove         = null;
@@ -856,13 +855,13 @@ var resetGamePanel = function()
   setSelectedGame(null);
 
   removeHighlights('b');
-  removeHighlights('w');        
+  removeHighlights('w');
   logEl.empty();
   logEl.append("<tr><th>#</th><th>White</th><th>Black</th></tr>");
-  $('#challenge-button').prop("disabled", true);   
+  $('#challenge-button').prop("disabled", true);
   $('#submit-button').prop("disabled", true);
   $('#undo-button').prop("disabled", true);
-  $('#reset-button').prop("disabled", true);     
+  $('#reset-button').prop("disabled", true);
   $('#sandbox-button').prop("disabled", false);
 
   GameTitleEl.html("");
@@ -870,8 +869,8 @@ var resetGamePanel = function()
   updateGameStatusLabel();
   updateTurnColorLabel();
 
- 
-}
+
+};
 
 
 /**
@@ -881,10 +880,9 @@ var updateLoadedGame = function()
 {
   if(loadedGame && !myTurn)
   {
-    const tmp = activeChallengeHash;
     loadGame();
   }
-}  
+};
 
 //===============================================================================
 // MAIN
@@ -894,7 +892,7 @@ console.log("holochess.js INIT");
 
 // Setup Chessboard
 // ================
-var ChessboardConfig = 
+var ChessboardConfig =
 {
     position     : 'start',
     showNotation : false,
@@ -906,7 +904,7 @@ var ChessboardConfig =
     onDrop       : board_onDrop,
     onSnapEnd    : board_onSnapEnd,
     onMouseoutSquare: board_onMouseoutSquare,
-    onMouseoverSquare: board_onMouseoverSquare,        
+    onMouseoverSquare: board_onMouseoverSquare,
     // onMoveEnd    : board_onMoveEnd // not called because there are no animations
 };
 
@@ -929,4 +927,4 @@ setInterval(updateLoadedGame, 2000);
 resetGamePanel();
 setSelectedPlayer(null);
 
-})() // end anonymous wrapper
+})(); // end anonymous wrapper

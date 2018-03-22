@@ -17,7 +17,8 @@ var ME     = App.Key.Hash;
 var SOURCE_AS_HASH = true;
 
 // NOT USED YET
-// var GAME_MAX_FULLMOVE     = 300; // arbitrary limit to game size - 
+// var GAME_MAX_FULLMOVE             = 300;     // arbitrary limit to game size
+
 // var GAME_STATE_NULL               = 1 << 0;
 // var GAME_STATE_CHALLENGE_PENDING  = 1 << 1;
 // var GAME_STATE_ACTIVE             = 1 << 2;
@@ -34,7 +35,7 @@ var SOURCE_AS_HASH = true;
 // HANDLES / AGENT
 // ==============================================================================
 
-/** 
+/**
  * return this agent's hash
  */
 function getMyHash()
@@ -45,8 +46,8 @@ function getMyHash()
 
 /**
  *  return array of handle_links with Agent's hash as key
- */ 
-function getAllHandles() 
+ */
+function getAllHandles()
 {
   var linkArray = getEntriesFromLinks(APP_ID, "player", SOURCE_AS_HASH);
   return (linkArray? linkArray : []);
@@ -55,7 +56,7 @@ function getAllHandles()
 
 /**
  *  return the current handle of this node
- */ 
+ */
 function getMyHandle()
 {
   debug("getMyHandle");
@@ -67,13 +68,12 @@ function getMyHandle()
 
 /**
  * return the handle of an agent
- */ 
+ */
 function getHandle(agentHash)
 {
   // debug("getHandle: " + agentHash);
-  // FIXME : check valid agentHash?
   var linkArray = getEntriesFromLinks(agentHash, "handle");
-  if(!linkArray || linkArray.length != 1)
+  if(!linkArray || linkArray.length !== 1)
   {
     return [];
   }
@@ -84,7 +84,7 @@ function getHandle(agentHash)
 /**
  * commit initial handle and its links on the app's directory
  */
-function commitInitialHandle(handle) 
+function commitInitialHandle(handle)
 {
   // TODO confirm no collision?
 
@@ -101,13 +101,13 @@ function commitInitialHandle(handle)
 }
 
 
-// 
+//
 // HOLOCHESS
 // ==============================================================================
 
 /**
  *  Create a Challenge Entry
- */ 
+ */
 function commitChallenge(challenge)
 {
   if(!challenge)
@@ -115,9 +115,9 @@ function commitChallenge(challenge)
     return null;
   }
   challenge.challenger = ME;
-  
+
   debug("commitChallenge: "+ JSON.stringify(challenge));
-  
+
   // commit challenge entry to my source chain
   var challengeHash = commit('challenge', challenge);
 
@@ -132,7 +132,7 @@ function commitChallenge(challenge)
 
 /**
  *  Create a Move Entry
- */ 
+ */
 function commitMove(move)
 {
   if(!move)
@@ -141,7 +141,7 @@ function commitMove(move)
   }
   debug("new move on game: "+ move.challengeHash + "\n\t san: " + move.san + " | " + move.index);
 
-  // Build and commit move entry to my source chain  
+  // Build and commit move entry to my source chain
   var moveHash = commit('move', move);
   debug("\tmove hash: " + moveHash);
   // On the DHT, put a link on the challenge's hash to the new move.
@@ -151,8 +151,8 @@ function commitMove(move)
 
 
 /**
- *  return array of strings of all the moves of the game, in SAN, sorted by index 
- */ 
+ *  return array of strings of all the moves of the game, in SAN, sorted by index
+ */
 function getMoves(challengeHash)
 {
   // getLinks from DHT
@@ -163,12 +163,12 @@ function getMoves(challengeHash)
   moves.sort(function (a, b) {return a.Entry.index - b.Entry.index;} );
 
   // Convert to SAN string array
-  var sanMoves = [];  
+  var sanMoves = [];
   for(var i = 0; i < moves.length; i++)
   {
     var move = moves[i];
     sanMoves.push(move.Entry.san);
-    // debug("\t " + i + ". " + move.Entry.san + " | " + move.Entry.index); 
+    // debug("\t " + i + ". " + move.Entry.san + " | " + move.Entry.index);
   }
   return sanMoves;
 }
@@ -176,11 +176,11 @@ function getMoves(challengeHash)
 
 /**
  * Load Challenge from its hash
- * return null if requested entry is not 'challenge' type 
+ * return null if requested entry is not 'challenge' type
  */
 function getChallenge(hash)
 {
-  debug("getChallenge called: " + hash);  
+  debug("getChallenge called: " + hash);
   var challenge = get(hash);
   debug("Challenge: " + challenge);
 
@@ -193,15 +193,15 @@ function getChallenge(hash)
 /**
  *  return array of entries of challenges that corresponds to query parameters
  *  sorted by timestamp
- */ 
+ */
 function getMyGames(/* stateMask, challengerHash, challengeeHash */)
 {
   // debug("getMyGames:");
   // getLinks from DHT
   var initiatedChallenges = getEntriesFromLinks(ME, "initiated");
-  var receivedChallenges = getEntriesFromLinks(ME, "received");
+  var receivedChallenges  = getEntriesFromLinks(ME, "received");
   // debug("\t Initiated: " + initiatedChallenges.length + "  received: " + receivedChallenges.length);
-  
+
   var myGames = initiatedChallenges.concat(receivedChallenges);
 
   // Sort by timestamp
@@ -217,28 +217,28 @@ function getMyGames(/* stateMask, challengerHash, challengeeHash */)
 
 
 // helper function to determine if value returned from holochain function is an error
-function hasErrorOccurred(result) 
+function hasErrorOccurred(result)
 {
-  return ((typeof result === 'object') && result.name == "HolochainError");
+  return ((typeof result === 'object') && result.name === "HolochainError");
 }
 
 
 /**
- * Helper for the "getLinks" with load call. 
- * Handle the no-link error case. 
+ * Helper for the "getLinks" with load call.
+ * Handle the no-link error case.
  * Copy the returned entry values into a nicer array
  " @param canSourceBeHash if TRUE attribute Hash will be hash of the Source
  */
-function getEntriesFromLinks(base, tag, canSourceBeHash) 
+function getEntriesFromLinks(base, tag, canSourceBeHash)
 {
-  // debug("getEntriesFromLinks: " + base + " | tag : " + tag + " | " + canSourceBeHash);   
+  // debug("getEntriesFromLinks: " + base + " | tag : " + tag + " | " + canSourceBeHash);
   // Get the tag from the base in the DHT
   var links = getLinks(base, tag, {Load:true});
 
   // Handle error
-  if (hasErrorOccurred(links)) 
+  if (hasErrorOccurred(links))
   {
-    // debug("getEntriesFromLinks failed: " + base + " | tag : " + tag);    
+    // debug("getEntriesFromLinks failed: " + base + " | tag : " + tag);
     return [];
   }
 
@@ -246,7 +246,7 @@ function getEntriesFromLinks(base, tag, canSourceBeHash)
 
   // Build smaller array with just Hash and Entry value
   var miniLinkArray = [];
-  for (var i = 0; i < links.length; i++) 
+  for (var i = 0; i < links.length; i++)
   {
       var link     = links[i];
       // debug("\n" + JSON.stringify(link));
@@ -259,17 +259,17 @@ function getEntriesFromLinks(base, tag, canSourceBeHash)
 
 
 /**
- * Helper for the "getLinks" without load call. 
+ * Helper for the "getLinks" without load call.
  * Handle the no links entry error
  * Build a simpler links array
  */
-function getKeysFromLinks(base, tag) 
+function getKeysFromLinks(base, tag)
 {
   // Get the tag from the base in the DHT
   var links = getLinks(base, tag, {Load:false});
-  if (hasErrorOccurred(links)) 
+  if (hasErrorOccurred(links))
   {
-    debug("getHashsFromLinks failed: " + base + " | tag : " + tag);    
+    debug("getKeysFromLinks failed: " + base + " | tag : " + tag);
     return [];
   }
   // debug("Links:" + JSON.stringify(links));
@@ -288,9 +288,6 @@ function getKeysFromLinks(base, tag)
 // CALLBACKS: Called by back-end system, instead of front-end app or UI
 // ===============================================================================
 
-// GENESIS - Called only when your source chain is generated:'hc gen chain <name>'
-// ===============================================================================
-
 /**
  * Called only when your source chain is generated
  * @return {boolean} success
@@ -302,7 +299,6 @@ function genesis()
 }
 
 
-// -----------------------------------------------------------------
 //  VALIDATION functions for every DHT entry change
 // -----------------------------------------------------------------
 
@@ -325,14 +321,14 @@ function validateChallenge(entry, header, pkg, source)
     return false;
   }
 
-  // FIXME challengee is in directory?
+  // FIXME validateChallenge: challengee is in directory?
 
   return true;
 }
 
 
 /**
- * 
+ *
  */
 function validateMove(entry, header, pkg, sources)
 {
@@ -355,8 +351,6 @@ function validateMove(entry, header, pkg, sources)
   debug("VALIDATE MOVE - challenge - " + JSON.stringify(challenge));
 
 
-  // if(   sourceHash.localeCompare(challenge.challenger) && sourceHash.localeCompare(challenge.challengee))
-
   if(challenge.challenger !== sourceHash && challenge.challengee !== sourceHash)
   {
     debug("validateMove FAILED: Challenge and Source don't match.");
@@ -371,7 +365,7 @@ function validateMove(entry, header, pkg, sources)
   // Check index match
   if(moves.length !== entry.index)
   {
-      debug("validateMove FAILED: Bad Move.index (" + moves.length + " != " + entry.index + ")");      
+      debug("validateMove FAILED: Bad Move.index (" + moves.length + " != " + entry.index + ")");
       return false;
   }
 
@@ -381,9 +375,9 @@ function validateMove(entry, header, pkg, sources)
   var canSourcePlay = ((entry.index % 2) === (!isSourceWhite % 2)); // White plays on even indices
   if(!canSourcePlay)
   {
-     debug("validateMove FAILED: Not Source's turn. Source is " 
+     debug("validateMove FAILED: Not Source's turn. Source is "
             + isSourceWhite? "White" : "Black"
-            + ". Move.index is " + entry.index);          
+            + ". Move.index is " + entry.index);
     return false;
   }
   // Create chess Engine and go through all previous moves to get current game state
@@ -391,12 +385,12 @@ function validateMove(entry, header, pkg, sources)
   var chessEngine = new Chess();
   for(var i = 0; i < moves.length; i++)
   {
-      var move = chessEngine.move(moves[i]);            
+      var move = chessEngine.move(moves[i]);
       if(move === null)
       {
         debug("validateMove FAILED: Chess game playback failed on move " + i + "." + moves[i]);
         return false;
-      }    
+      }
   }
   // Check if game is already over
   if(chessEngine.game_over())
@@ -405,8 +399,8 @@ function validateMove(entry, header, pkg, sources)
     return false;
   }
   // Try next move
-  var newMove = chessEngine.move(entry.san);  
-  if(move === null)
+  var newMove = chessEngine.move(entry.san);
+  if(newMove === null)
   {
     debug("validateMove FAILED: New move is invalid ( " + entry.san + ")");
     debug(chessEngine.fen());
@@ -419,13 +413,13 @@ function validateMove(entry, header, pkg, sources)
 
 
 /**
- * FIXME
+ *
  */
 function validateLink(linkEntryType, baseHash, links, pkg, sources)
 {
   debug("validate link: " + linkEntryType);
-  // FIXME
-  return true; 
+  // FIXME: validateLink()
+  return true;
 }
 
 
@@ -440,7 +434,7 @@ function validateCommit(entryType, entry, header, pkg, sources)
     case 'challenge':
       return validateChallenge(entry, header, pkg, sources);
     case 'move':
-      return validateMove(entry, header, pkg, sources);      
+      return validateMove(entry, header, pkg, sources);
     case 'handle':
     case 'game_result':
     case 'challenge_links':
@@ -456,20 +450,20 @@ function validateCommit(entryType, entry, header, pkg, sources)
 
 
 /**
- * 
+ *
  */
 function validatePut(entryType, entry, header, pkg, sources)
 {
-  debug("validate put: " + entryType);  
+  debug("validate put: " + entryType);
   switch (entryType)
   {
     case 'challenge':
       return validateChallenge(entry, header, pkg, sources);
     case 'move':
-      return validateMove(entry, header, pkg, sources); 
+      return validateMove(entry, header, pkg, sources);
       case 'handle':
       case 'game_result':
-        return true;      
+        return true;
     default:
       // invalid entry name
       return false
@@ -482,15 +476,15 @@ function validatePut(entryType, entry, header, pkg, sources)
  */
 function validateMod(entryType, entry, header, replaces, pkg, sources)
 {
-  debug("validate mod: " + entryType+" header:"+JSON.stringify(header)+" replaces:"+JSON.stringify(replaces));
+  debug("validate mod: " + entryType + " header:" + JSON.stringify(header) + " replaces:" + JSON.stringify(replaces));
 
   switch (entryType)
   {
     case 'challenge':
     case 'move':
     case 'game_result':
-      return false;    
-    case 'handle':      
+      return false;
+    case 'handle':
       return true;
     default:
       // invalid entry name
@@ -502,16 +496,16 @@ function validateMod(entryType, entry, header, replaces, pkg, sources)
 /**
  * TODO: Possibility to remove challenge if it has not been accepted
  */
-function validateDel(entryName,hash, pkg, sources)
+function validateDel(entryName, hash, pkg, sources)
 {
-  debug("validate del: "+entry_type);  
+  debug("validate del: "+ entryName);
   switch (entryName)
   {
     case 'challenge':
     case 'move':
     case 'handle':
     case 'game_result':
-      return false;    
+      return false;
     default:
       // invalid entry name
       return false;

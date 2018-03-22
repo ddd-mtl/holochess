@@ -60,6 +60,7 @@ Each instance should see the other agent's name in the *Players* list.
 You now have 2 instances of Holochess that can interact.  
 Challenge an opponent to create a game and submit your move to start a P2P chess game!
 
+I'm making a chess game with holochain. You can check it out on github, it actually works! On my machine at least ;)  https://github.com/ddd-mtl/holochess My programmer brain couldn't come up with a better name :/
 
 
 ## Feature Roadmap
@@ -78,6 +79,9 @@ Challenge an opponent to create a game and submit your move to start a P2P chess
  - [ ] Integrate with DPKI for bridging app contexts
  - [ ] Integrate with chat for bridging app contexts
  - [ ] Time sensitive chess games
+ - [ ] Random player start with cointoss
+ - [ ] Multilingual
+ - [ ] Notifications - somehow
 
 
 

@@ -3,8 +3,8 @@
 //---------------------------------------------------------------------------------------
 
 // holo-bridge.js
-// Responsable only for communication with holochain zome
-//      Doesnt know anything about html / css
+// Responsible only for communication with holochain zome
+//      Doesn't know anything about html / css
 // Called by holochain.js
 
 //===============================================================================
@@ -21,15 +21,16 @@ var g_myGames             = null; // View-model for Challenges
 // HOLOCHAIN PROMISE - HCP
 // ==============================================================================
 
+
 /**
  * Promise of AJAX request to Holochain
  */
 function hcp(fn, data)
 {
-  return new Promise(function(resolve, reject)
+  return new Promise(function(resolve, reject) 
                     {
                       // Do the usual XHR stuff
-                      var req = new XMLHttpRequest();
+                      let req = new XMLHttpRequest();
                       req.open('POST', "/fn/Holochess/" + fn, true);
 
                       // req.setRequestHeader('Content-type', 'application/json')
@@ -38,7 +39,7 @@ function hcp(fn, data)
                                   {
                                     // 'load' triggers for 404s etc
                                     // so check the status
-                                    if (req.status == 200)
+                                    if (req.status === 200)
                                     {
                                       // Resolve the promise with the response text
                                       resolve(req.response);
@@ -72,11 +73,11 @@ function hcp_json(fn, data)
 // GET HANDLES / AGENTS
 //============================================================================
 
-/** 
+/**
  * Get this Agent's Hash
  * Tries to get cache first
  */
-function hcp_getMyHash() 
+function hcp_getMyHash()
 {
   if(g_myHash)
   {
@@ -96,11 +97,11 @@ function hcp_getMyHash()
 function hcp_getHandle(agentHash)
 {
   // console.log("hcp_getHandle called: " + agentHash);
-  if (agentHash == undefined)
+  if (agentHash === undefined)
   {
     console.log("hcp_getHandle abort: bad arguments");
-    return Promise.reject();
-  }    
+    return Promise.reject(null);
+  }
   return hcp("getHandle", agentHash);
 }
 
@@ -109,18 +110,18 @@ function hcp_getHandle(agentHash)
  * Get this Agent's Handle
  * Tries to get cache first
  */
-function hcp_getMyHandle() 
+function hcp_getMyHandle()
 {
   if(g_myHandle)
   {
     return Promise.resolve(g_myHandle);
   }
-  return hcp_getMyHash().then(function(hash) 
+  return hcp_getMyHash().then(function(hash)
          {
           return hcp_getHandle(hash).then(function(str)
                         {
-                          g_myHandle = str; 
-                          return g_myHandle;               
+                          g_myHandle = str;
+                          return g_myHandle;
                         }
                         ,function(err)
                         {
@@ -131,11 +132,11 @@ function hcp_getMyHandle()
 
 
 /**
- * 
+ *
  */
 function hcp_getAllHandles()
-{ 
-  return hcp_json("getAllHandles"); 
+{
+  return hcp_json("getAllHandles");
 }
 
 
@@ -146,21 +147,21 @@ function hcp_getAllHandles()
 /**
  * Get all Moves related to a Challenge
  */
-function hcp_getMoves(challengeHash) 
+function hcp_getMoves(challengeHash)
 {
   console.log("hcp_getMoves called: " + challengeHash);
-  
+
   g_loadedChallengeHash = challengeHash;
 
-  var promise = hcp_json("getMoves", JSON.stringify(challengeHash)); // because "CallingType": "json"
+  let promise = hcp_json("getMoves", JSON.stringify(challengeHash)); // because "CallingType": "json"
 
   return promise.then(function(moveArray)
-        {         
+        {
           return moveArray;
         },
         function(err)
         {
-          console.log("hcp_getMoves failed: " + err); 
+          console.log("hcp_getMoves failed: " + err);
           g_loadedChallengeHash = null;
           return [];
         });
@@ -174,38 +175,38 @@ function hcp_getMoves(challengeHash)
 function challenge2Game(challengeResponse)
 {
   //console.log("hcp_getChallengeHandles called: " + JSON.stringify(challengeResponse));
-  if (challengeResponse == undefined)
+  if (challengeResponse === undefined)
   {
     console.log("processChallenge abort: bad arguments");
-    return Promise.reject();
-  }    
+    return Promise.reject(null);
+  }
   // Get challenger's handle
   return hcp_getHandle(challengeResponse.Entry.challenger).then(function(str)
         {
           g_myGames[challengeResponse.Hash].challengerHandle = str;
           // Get challengee's handle
           return hcp_getHandle(challengeResponse.Entry.challengee).then(function(str)
-                  {                    
+                  {
                     g_myGames[challengeResponse.Hash].challengeeHandle = str;
 
                     // Compute Game state
                     // assert(g_myHash);
-                    var game = g_myGames[challengeResponse.Hash];                    
+                    let game = g_myGames[challengeResponse.Hash];
                     g_myGames[challengeResponse.Hash].iAmChallenger = (game.challenger === g_myHash);
                     const iAmChallenger = g_myGames[challengeResponse.Hash].iAmChallenger;
-                    g_myGames[challengeResponse.Hash].iPlayWhite = (iAmChallenger && game.challengerPlaysWhite || 
+                    g_myGames[challengeResponse.Hash].iPlayWhite = (iAmChallenger && game.challengerPlaysWhite ||
                                                                     !iAmChallenger && !game.challengerPlaysWhite);
-                                        
-                    // generate name                    
+
+                    // generate name
                     const whiteHandle = (game.challengerPlaysWhite? game.challengerHandle : game.challengeeHandle);
                     const blackHandle = (game.challengerPlaysWhite? game.challengeeHandle : game.challengerHandle);
 
-                    var date = new Date();
+                    let date = new Date();
                     date.setTime(game.timestamp);
-                    const datestr = date.getFullYear() + "-" + date.getMonth() + "-" + date.getDate();
+                    const dateString = date.getFullYear() + "-" + date.getMonth() + "-" + date.getDate();
                     //+ " " + date.toLocaleTimeString();
 
-                    g_myGames[challengeResponse.Hash].name = whiteHandle + " vs. " + blackHandle + " (" + datestr + ")";                  
+                    g_myGames[challengeResponse.Hash].name = whiteHandle + " vs. " + blackHandle + " (" + dateString + ")";
                   });
         });
 }
@@ -215,9 +216,9 @@ function challenge2Game(challengeResponse)
  * Get all Challenges related to this Agent.
  * For each Challenge get player's handles and setup view-model data.
  */
-function hcp_getMyGames() 
+function hcp_getMyGames()
 {
-  return hcp_json("getMyGames").then(function(challengeEntries) 
+  return hcp_json("getMyGames").then(function(challengeEntries)
             {
               // console.log("hcp_getMyGames response:\n" + JSON.stringify(challengeEntries) + "\n");
               // Create Games associated array with challenge's hash as key
@@ -225,12 +226,12 @@ function hcp_getMyGames()
               for(let i = 0; i < challengeEntries.length; i++)
               {
                 g_myGames[challengeEntries[i].Hash] = challengeEntries[i].Entry;
-              }              
+              }
               return Promise.all(challengeEntries.map(challenge2Game));
             }).catch(function(err)
-                     {    
-                      console.log("hcp_getMyGames failed");                 
-                     });          
+                     {
+                      console.log("hcp_getMyGames failed: ", err);
+                     });
 }
 
 
@@ -241,13 +242,13 @@ function hcp_getMyGames()
 /**
  * Submit Challenge Entry to Holochain
  */
-function hcp_commitChallenge(challengeeHash) 
+function hcp_commitChallenge(challengeeHash)
 {
   // Check pre-conditions
-  if (!challengeeHash || challengeeHash == undefined) 
+  if (!challengeeHash || challengeeHash === undefined)
   {
     alert("pick a player first!");
-    return Promise.reject();
+    return Promise.reject(null);
   }
   // Create Holochain Entry
   const challengeEntry = {
@@ -255,31 +256,31 @@ function hcp_commitChallenge(challengeeHash)
     challengee          : challengeeHash,
     challengerPlaysWhite: true,                  // FIXME: hardcoded
     isGamePublic        : true                   // FIXME: hardcoded
-  }
+  };
   // Create Promise
-  return hcp_json("commitChallenge", JSON.stringify(challengeEntry));  
+  return hcp_json("commitChallenge", JSON.stringify(challengeEntry));
 }
 
 
 /**
  * Submit Move Entry to Holochain
  */
-function hcp_commitMove(challengeHash, sanMove, index) 
+function hcp_commitMove(challengeHash, sanMove, index)
 {
   // Check pre-conditions
-  if (   !challengeHash || challengeHash == undefined
-      || !sanMove || sanMove == undefined
-      || index == undefined) 
+  if (   !challengeHash || challengeHash === undefined
+      || !sanMove || sanMove === undefined
+      || index === undefined)
   {
     alert("Failed committing move!");
-    return Promise.reject();
+    return Promise.reject(null);
   }
   // Create Holochain Entry
   const moveEntry = {
     challengeHash : challengeHash,
     san           : sanMove,
     index         : index
-  }
+  };
   // Create Promise
   return hcp("commitMove", JSON.stringify(moveEntry));
 }
@@ -292,7 +293,7 @@ function hcp_commitMove(challengeHash, sanMove, index)
 /**
  * Once page is loaded, get my local info
  */
-$(window).ready(function() 
+$(window).ready(function()
 {
   console.log("holo-bridge.js INIT");
 
