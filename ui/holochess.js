@@ -411,7 +411,8 @@ $('#sandbox-button').on('click', function()
 
 
 /**
- * RESET BUTTON = Set Game state to GAME_STATE_EMPTY
+ * RESET BUTTON
+ *    Set Game state to GAME_STATE_EMPTY
  */
 $('#reset-button').on('click', function()
 {
@@ -431,64 +432,66 @@ var loadGame = function(challengeHash)
   {
     challengeHash = g_loadedChallengeHash;
   }
-
   // First get all Moves from Holochain
-  return hcp_getMoves(challengeHash).then(function(sanArray)
-  {
-    // End here if no new move
-    if(sanArray && cachedSanArray && isEqual(sanArray, cachedSanArray))
-    {
-      return;
-    }
+  return hcpGetMoves(challengeHash).then(
+          function(sanArray)
+          {
+            // Don't do anything if no new move
+            if(sanArray && cachedSanArray && isEqual(sanArray, cachedSanArray))
+            {
+              return;
+            }
 
-     // First reset game state
-    resetGamePanel();
+            // Rebuild Game Panel
+            // ==================
+            // First reset game state
+            resetGamePanel();
 
-    gameState      = GAME_STATE_CHALLENGE_VIEWING;
-    cachedSanArray = sanArray;
-    canWhitePlay   = true;
+            gameState      = GAME_STATE_CHALLENGE_VIEWING;
+            cachedSanArray = sanArray;
+            canWhitePlay   = true;
 
-    // Get Game
-    loadedGame = g_myGames[g_loadedChallengeHash]; // FIXME Game might not be ready to display
+            // Get Game
+            loadedGame = g_myGames[g_loadedChallengeHash]; // FIXME Game might not be ready to display
 
-    // Go through all the moves
-    for(let i = 0; i < sanArray.length; i++)
-    {
-      console.log("\t" + i + ". " + sanArray[i]);
-      let move = gameEngine.move(sanArray[i]);
-      if(move === null)
-      {
-        alert("invalid move:" + sanArray[i]);
-        break;
-      }
-      // undo-redo to get last Move object
-      let moveObj = gameEngine.undo();
-      gameEngine.move(moveObj);
-      updateGame(moveObj);
-    }
-    board_onSnapEnd();
+            // Go through all the moves
+            for(let i = 0; i < sanArray.length; i++)
+            {
+              console.log("\t" + i + ". " + sanArray[i]);
+              let move = gameEngine.move(sanArray[i]);
+              if(move === null)
+              {
+                alert("invalid move:" + sanArray[i]);
+                break;
+              }
+              // undo-redo to get last Move object
+              let moveObj = gameEngine.undo();
+              gameEngine.move(moveObj);
+              updateGame(moveObj);
+            }
+            board_onSnapEnd();
 
-    // Set board orientation
-    if(!loadedGame.iPlayWhite)
-    {
-      // console.log("\t\tBOARD FLIP");
-      board.orientation('black');
-    }
+            // Set board orientation
+            if(!loadedGame.iPlayWhite)
+            {
+              // console.log("\t\tBOARD FLIP");
+              board.orientation('black');
+            }
 
-    // Update stateful variables
-    myTurn = (loadedGame.iPlayWhite && canWhitePlay ||
-              !loadedGame.iPlayWhite && !canWhitePlay);
-    canSubmit = myTurn;
+            // Update stateful variables
+            myTurn = (loadedGame.iPlayWhite && canWhitePlay ||
+                      !loadedGame.iPlayWhite && !canWhitePlay);
+            canSubmit = myTurn;
 
-    // Update Html
-    challengeeHandle = (loadedGame.iAmChallenger? loadedGame.challengeeHandle : loadedGame.challengerHandle);
-    GameTitleEl.html(loadedGame.name);
-    $('#reset-button').prop("disabled", false);
-    updateGameStatusLabel();
-    updateTurnColorLabel();
+            // Update Html
+            challengeeHandle = (loadedGame.iAmChallenger? loadedGame.challengeeHandle : loadedGame.challengerHandle);
+            GameTitleEl.html(loadedGame.name);
+            $('#reset-button').prop("disabled", false);
+            updateGameStatusLabel();
+            updateTurnColorLabel();
 
-    setSelectedGame(challengeHash);
-  });
+            setSelectedGame(challengeHash);
+          });
 };
 
 
@@ -501,7 +504,6 @@ $('#undo-button').on('click', function()
   {
     return;
   }
-
   gameEngine.undo();
   lastSubmittedFen = gameEngine.fen();
   $('#submit-button').prop("disabled", true);
@@ -526,25 +528,25 @@ var submitMove = function()
 
   // undo-redo to get last Move object
   const lastMove = gameEngine.undo();
+  const lastSan  = lastMove.san;
   gameEngine.move(lastMove);
-  const lastSan = lastMove.san;
-
   console.log("Submit Move: " + lastSubmittedMove + " | " + lastSan);
 
   // Update Game after HCP completes
   let movePromise = mustSubmitOnHolochain?
-                      hcp_commitMove(g_loadedChallengeHash, lastSan, moveCount)
+                      hcpCommitMove(g_loadedChallengeHash, lastSan, moveCount)
                     : Promise.resolve();
-  movePromise.then(function(hash)
-  {
-    updateGame(lastMove);
-    updateTurnColorLabel();
-    myTurn = false;
-    if(mustSubmitOnHolochain)
+  movePromise.then(
+    function(hash)
     {
-      updateLoadedGame();
-    }
-  });
+      updateGame(lastMove);
+      updateTurnColorLabel();
+      myTurn = false;
+      if(mustSubmitOnHolochain)
+      {
+        updateLoadedGame();
+      }
+    });
 };
 
 
@@ -555,19 +557,23 @@ $('#submit-button').on('click', submitMove);
 
 
 /**
- * CHALLENGE BUTTON = Submit Challenge Entry,
- * update my Games list and load newly created Game
+ * CHALLENGE BUTTON
+ *    Submit Challenge Entry
+ *    update my Games list
+ *    load newly created Game
  */
 $("#challenge-button").on("click", function()
 {
-  hcp_commitChallenge(activeOpponentHash).then(function(challengeHash)
-  {
-    setSelectedPlayer(null);
-    getMyGames().then(function()
+  hcpCommitChallenge(activeOpponentHash).then(
+    function(challengeHash)
     {
-      loadGame(challengeHash);
+      setSelectedPlayer(null);
+      pmsRefreshMyGamesUl().then(
+        function(/* std */)
+        {
+          loadGame(challengeHash);
+        });
     });
-  });
 });
 
 
@@ -576,26 +582,29 @@ $("#challenge-button").on("click", function()
  */
 var getAllHandles = function()
 {
-  hcp_getAllHandles().then(function(allHandlesArg)
-  {
-    updateOpponentList(allHandlesArg);
-  });
+  hcpGetAllHandles().then(
+    function(allHandlesArg)
+    {
+      updateOpponentList(allHandlesArg);
+    });
 };
 
 
 /**
  * Update Games list
  */
-var getMyGames = function()
+var pmsRefreshMyGamesUl = function()
 {
-  return hcp_getMyGames().then(function()
-    {
-      buildMyGamesUl(g_myGames);
-    })
-    .catch(function(err)
-    {
-      console.log("hcp_getMyGames failed: " + err);
-    });
+  return hcpGetMyGames().then(
+          function()
+          {
+            buildMyGamesUl(g_myGames);
+          }
+          ).catch(
+              function(err)
+              {
+                console.log("hcpGetMyGames failed: " + err);
+              });
 };
 
 
@@ -796,20 +805,19 @@ var updateGame = function(newMove)
  */
 var buildMyGamesUl = function(gameArray)
 {
+  // Do nothing if nothing changed
+  if(isEqual(myGames, gameArray))
+  {
+    return;
+  }
+  myGames = gameArray;
   // Check edge case: No games
   if(!gameArray || gameArray === undefined || Object.keys(gameArray).length === 0)
   {
     myGamesUl.html("None");
     return;
   }
-  // End here if nothing changed
-  if(isEqual(myGames, gameArray))
-  {
-    return;
-  }
-
   // Rebuild list by looping through games and create li per game
-  myGames = gameArray;
   myGamesUl.empty();
   Object.keys(gameArray).forEach(function(key, index)
   {
@@ -819,7 +827,6 @@ var buildMyGamesUl = function(gameArray)
       + this[key].name
       + "</li>");
   }, gameArray);
-
   // Re-select active challenge
   if(activeChallengeHash)
   {
@@ -868,8 +875,6 @@ var resetGamePanel = function()
   challengeeHandle = '';
   updateGameStatusLabel();
   updateTurnColorLabel();
-
-
 };
 
 
@@ -884,6 +889,7 @@ var updateLoadedGame = function()
   }
 };
 
+
 //===============================================================================
 // MAIN
 //==============================================================================
@@ -894,37 +900,42 @@ console.log("holochess.js INIT");
 // ================
 var ChessboardConfig =
 {
-    position     : 'start',
-    showNotation : false,
-    draggable    : true,
-    moveSpeed    : 'slow',
-    snapbackSpeed: 200,
-    snapSpeed    : 100,
-    onDragStart  : board_onDragStart,
-    onDrop       : board_onDrop,
-    onSnapEnd    : board_onSnapEnd,
-    onMouseoutSquare: board_onMouseoutSquare,
-    onMouseoverSquare: board_onMouseoverSquare,
-    // onMoveEnd    : board_onMoveEnd // not called because there are no animations
+  position          : 'start',
+  showNotation      : false,
+  draggable         : true,
+  moveSpeed         : 'slow',
+  snapbackSpeed     : 200,
+  snapSpeed         : 100,
+  onDragStart       : board_onDragStart,
+  onDrop            : board_onDrop,
+  onSnapEnd         : board_onSnapEnd,
+  onMouseoutSquare  : board_onMouseoutSquare,
+  onMouseoverSquare : board_onMouseoverSquare,
+  // onMoveEnd      : board_onMoveEnd // not called because there are no animations
 };
 
 // Setup chess board and chess engine
-var board = Chessboard('#myBoard', ChessboardConfig);
+var board      = Chessboard('#myBoard', ChessboardConfig);
 var gameEngine = new Chess();
 
 // Setup data fetching from Holochain
-hcp_getMyHandle().then(function(myHandle)
-{
-  myHandleEl.html("(" + myHandle + ")");
-});
-getAllHandles();
-setInterval(getAllHandles, 2000);
-getMyGames();
-setInterval(getMyGames, 2000);
-setInterval(updateLoadedGame, 2000);
+hcpGetMyHandle().then(
+  function(myHandle)
+  {
+    myHandleEl.html("(" + myHandle + ")");
 
-// Reset Game state
-resetGamePanel();
-setSelectedPlayer(null);
+    getAllHandles();
+    setInterval(getAllHandles, 2000);
+    pmsRefreshMyGamesUl().then(
+      function(/* resolve */)
+      {
+        setInterval(pmsRefreshMyGamesUl, 2000);
+        setInterval(updateLoadedGame, 2000);
+
+        // Reset Game state
+        resetGamePanel();
+        setSelectedPlayer(null);
+      });
+  });
 
 })(); // end anonymous wrapper

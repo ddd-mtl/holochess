@@ -2,9 +2,9 @@
   "Identity": "camille",
   "Fixtures": {
     "Agents": null
-  },    
+  },
   "Tests":
-  [  
+  [
     {
       "Convey"  : "getMyHandle: My handle should be my Agent.String",
       "Zome"    : "Holochess",
@@ -44,36 +44,6 @@
       "Exposure": "public",
       "Raw"     : false,
       "Repeat"  : 0
-    },        
-    {
-      "Convey"  : "setHandle: Changing handle",
-      "Zome"    : "Holochess",
-      "FnName"  : "setHandle",
-      "Input"   : "toto",
-      "Output"  : "%h2%",
-      "Exposure": "public",
-      "Raw"     : false,
-      "Repeat"  : 0
-    },
-    {
-      "Convey"  : "getMyHandle: Should retrieve new handle",
-      "Zome"    : "Holochess",
-      "FnName"  : "getHandle",
-      "Input"   : "",
-      "Output"  : "toto",
-      "Exposure": "public",
-      "Raw"     : false,
-      "Repeat"  : 0
-    },
-    {
-      "Convey"  : "getHandle: Should retrieve new handle",
-      "Zome"    : "Holochess",
-      "FnName"  : "getHandle",
-      "Input"   : "%key%",
-      "Output"  : "toto",
-      "Exposure": "public",
-      "Raw"     : false,
-      "Repeat"  : 0
-    }                                            
+    }
   ]
 }

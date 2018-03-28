@@ -50,7 +50,13 @@ function getMyHash()
 function getAllHandles()
 {
   var linkArray = getEntriesFromLinks(APP_ID, "player", SOURCE_AS_HASH);
-  return (linkArray? linkArray : []);
+  if(!linkArray)
+  {
+    return [];
+  }
+  // Sort alphabetically by name
+  linkArray.sort(function (a, b) {a.Entry.localeCompare(b.Entry)} );
+  return linkArray;
 }
 
 
@@ -139,7 +145,7 @@ function commitMove(move)
   {
     return null;
   }
-  debug("new move on game: "+ move.challengeHash + "\n\t san: " + move.san + " | " + move.index);
+  debug("new move on game: " + move.challengeHash + "\n\t san: " + move.san + " | " + move.index);
 
   // Build and commit move entry to my source chain
   var moveHash = commit('move', move);
@@ -157,7 +163,7 @@ function getMoves(challengeHash)
 {
   // getLinks from DHT
   var moves = getEntriesFromLinks(challengeHash, "halfmove");
-  // debug("getMoves of challenge: " + challengeHash + "\n\t moves found: " + moves.length);
+  debug("getMoves of challenge: " + challengeHash + "\n\t moves found: " + moves.length);
 
   // Sort by move index
   moves.sort(function (a, b) {return a.Entry.index - b.Entry.index;} );
@@ -238,7 +244,7 @@ function getEntriesFromLinks(base, tag, canSourceBeHash)
   // Handle error
   if (hasErrorOccurred(links))
   {
-    // debug("getEntriesFromLinks failed: " + base + " | tag : " + tag);
+    debug("getEntriesFromLinks failed: " + base + " | tag : " + tag);
     return [];
   }
 
@@ -332,7 +338,7 @@ function validateChallenge(entry, header, pkg, source)
  */
 function validateMove(entry, header, pkg, sources)
 {
-  debug("VALIDATE MOVE - " + sources);
+  //debug("VALIDATE MOVE - " + sources);
   debug("VALIDATE MOVE ENTRY - " + JSON.stringify(entry));
 
   var sourceHash = sources[0];
@@ -347,8 +353,8 @@ function validateMove(entry, header, pkg, sources)
     return false;
   }
 
-  challenge = JSON.parse(challenge);
-  debug("VALIDATE MOVE - challenge - " + JSON.stringify(challenge));
+  // challenge = JSON.parse(challenge);
+  // debug("VALIDATE MOVE - challenge - " + JSON.stringify(challenge));
 
 
   if(challenge.challenger !== sourceHash && challenge.challengee !== sourceHash)
@@ -373,6 +379,7 @@ function validateMove(entry, header, pkg, sources)
   var isSourceWhite = (   challenge.challenger === sourceHash && challenge.challengerPlaysWhite
                        || challenge.challengee === sourceHash && !challenge.challengerPlaysWhite);
   var canSourcePlay = ((entry.index % 2) === (!isSourceWhite % 2)); // White plays on even indices
+
   if(!canSourcePlay)
   {
      debug("validateMove FAILED: Not Source's turn. Source is "
@@ -381,7 +388,7 @@ function validateMove(entry, header, pkg, sources)
     return false;
   }
   // Create chess Engine and go through all previous moves to get current game state
-  debug("validateMove CREATING CHESS ENGINE");
+  //debug("validateMove CREATING CHESS ENGINE");
   var chessEngine = new Chess();
   for(var i = 0; i < moves.length; i++)
   {
@@ -428,7 +435,7 @@ function validateLink(linkEntryType, baseHash, links, pkg, sources)
  */
 function validateCommit(entryType, entry, header, pkg, sources)
 {
-  debug("validate commit: " + entryType);
+  // debug("validate commit: " + entryType);
   switch (entryType)
   {
     case 'challenge':

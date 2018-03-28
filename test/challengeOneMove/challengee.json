@@ -2,7 +2,7 @@
   "Identity": "billy",
   "Fixtures": {
     "Agents": null
-  },      
+  },
   "Tests":
   [
     {
@@ -11,20 +11,96 @@
       "FnName"  : "getMyHandle",
       "Input"   : "",
       "Output"  : "%agentstr%",
-      "Exposure": "public",
-      "Raw"     : false,
-      "Repeat"  : 0
-    },    
+      "Exposure": "public"
+    },
     {
-      "Time":5000,
-      "Convey":"get challengee's handle",
-      "Zome": "Holochess",
-      "FnName": "getAllHandles",
-      "Input": "",
-      "Output": [{"Entry":"%agentstr%","Hash":"%key%"}, {"Entry":"%challenger_str%","Hash":"%challenger_key%"}],
-      "Exposure":"public",
-      "Err": "",
-      "Regexp": ""
+      "Convey"  : "get my games: should not have any",
+      "Zome"    : "Holochess",
+      "FnName"  : "getMyGames",
+      "Input"   : "",
+      "Output"  : [],
+      "Exposure": "public",
+      "Regexp"  : ""
+    },
+    {
+      "Convey"  : "get challenger's handle",
+      "Time"    : 5000,
+      "Zome"    : "Holochess",
+      "FnName"  : "getAllHandles",
+      "Input"   : "",
+      "Output"  : [{"Entry":"%challenger_str%","Hash":"%challenger_key%"}, {"Entry":"%agentstr%","Hash":"%key%"}],
+      "Exposure": "public",
+      "Regexp"  : ""
+    },
+    {
+      "Convey"  : "Wait for challenger's challenge.",
+      "Time"    : 10000,
+      "Zome"    : "Holochess",
+      "FnName"  : "getMyGames",
+      "Input"   : "",
+      "Output"  : [{
+        "Entry": {
+          "challengee":"%key%",
+          "challenger":"%challenger_key%",
+          "challengerPlaysWhite":true,
+          "isGamePublic":true,
+          "timestamp":123456},
+        "Hash":"QmXrNbgEkJ82X6EvUkMKJrizhpHyhinPei6VMg91DBzcfz"
+      }],
+      "Exposure": "public",
+      "Regexp"  : ""
+    },
+    {
+      "Convey"  : "Wait for challenger's first move",
+      "Time"    : 15000,
+      "Zome"    : "Holochess",
+      "FnName"  : "getMoves",
+      "Input"   : "QmXrNbgEkJ82X6EvUkMKJrizhpHyhinPei6VMg91DBzcfz",
+      "Output"  : ["e4"],
+      "Exposure": "public",
+      "Regexp"  : ""
+    },
+    {
+      "Convey"  : "Play bad 2nd half-move: bad index",
+      "Time"    : 15500,
+      "Zome"    : "Holochess",
+      "FnName"  : "commitMove",
+      "Input": {
+        "challengeHash" : "QmXrNbgEkJ82X6EvUkMKJrizhpHyhinPei6VMg91DBzcfz",
+        "san"           : "d5",
+        "index"         : 0
+      },
+      "Exposure": "public",
+      "ErrMsg" : "Validation Failed",
+      "Regexp"  : ""
+    },
+    {
+      "Convey"  : "Play bad 2nd half-move: invalid move",
+      "Time"    : 15500,
+      "Zome"    : "Holochess",
+      "FnName"  : "commitMove",
+      "Input": {
+        "challengeHash" : "QmXrNbgEkJ82X6EvUkMKJrizhpHyhinPei6VMg91DBzcfz",
+        "san"           : "d4",
+        "index"         : 1
+      },
+      "Exposure": "public",
+      "ErrMsg" : "Validation Failed",
+      "Regexp"  : ""
+    },
+    {
+      "Convey"  : "Play valid 2nd half-move",
+      "Time"    : 15500,
+      "Zome"    : "Holochess",
+      "FnName"  : "commitMove",
+      "Input": {
+        "challengeHash" : "QmXrNbgEkJ82X6EvUkMKJrizhpHyhinPei6VMg91DBzcfz",
+        "san"           : "e5",
+        "index"         : 1
+      },
+      "Exposure": "public",
+      "Output"  : "%h1%",
+      "Regexp"  : ""
     }
-  ]  
+  ]
 }

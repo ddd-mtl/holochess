@@ -7,7 +7,7 @@
     "language": "en"
   },
   "PropertiesSchemaFile": "properties_schema.json",
-  "RequiresVersion": 18,
+  "RequiresVersion": 23,
   "DHTConfig": {
     "HashType": "sha2-256"
   },
@@ -16,59 +16,59 @@
       "Name": "Holochess",
       "Description": "Main Holochess zome",
       "CodeFile": "holochessZome.js",
-      "RibosomeType": "js",      
+      "RibosomeType": "js",
       "Entries": [
           {
             "Name": "handle",
-            "DataFormat": "string",            
+            "DataFormat": "string",
             "Comment": "Agent's self set name (non unique)",
             "Sharing": "public"
           },
           {
             "Name": "challenge",
-            "DataFormat": "json",            
+            "DataFormat": "json",
             "Comment": "Chess game initiation entry",
             "SchemaFile": "challenge.json",
             "Sharing": "public"
-          },                                
+          },
           {
               "Name": "move",
-              "DataFormat": "json",              
+              "DataFormat": "json",
               "Comment": "Chess half-move entry for a specific game",
               "SchemaFile": "move.json",
               "Sharing": "public"
           },
           {
               "Name": "handle_links",
-              "DataFormat": "links",              
+              "DataFormat": "links",
               "Base": "agent",
               "Link": "handle",
-              "Tags": ["handle"]     
+              "Tags": ["handle"]
           },
           {
             "Name": "challenge_links",
-            "DataFormat": "links",            
+            "DataFormat": "links",
             "Comment": "Bind Challenge to Agent",
             "Base": "agent",
             "Link": "challenge",
             "Tags": ["initiated", "received"]
-          },          
+          },
           {
               "Name": "move_links",
-              "DataFormat": "links",              
+              "DataFormat": "links",
               "Comment": "Bind Move to Challenge",
               "Base": "challenge",
               "Link": "move",
               "Tags": ["halfmove"]
-          },                
+          },
           {
               "Name": "directory_links",
-              "DataFormat": "links",              
+              "DataFormat": "links",
               "Comment": "Bind Agent to App",
               "Base": "app",
               "Link": "agent",
-              "Tags": ["player"]              
-          }              
+              "Tags": ["player"]
+          }
       ],
       "Functions": [
           {
@@ -76,7 +76,7 @@
             "Comment": "Get local Agent's hash",
             "CallingType": "string",
             "Exposure":"public"
-          },    		  
+          },
 		      {
             "Name": "getHandle",
             "Comment": "Get Handle of an Agent",
@@ -94,7 +94,7 @@
             "Comment": "Get all known Players latest Handle",
             "CallingType": "json",
             "Exposure":"public"
-          },                                    
+          },
           {
             "Name": "commitChallenge",
             "Comment": "Commit Challenge Entry",
@@ -106,7 +106,7 @@
             "Comment": "Get Challenge entry from hash",
             "CallingType": "json",
             "Exposure": "public"
-          },                                              
+          },
           {
             "Name": "getMyGames",
             "Comment": "Get all local Agent's Challenges",
@@ -118,13 +118,13 @@
             "Comment": "Commit Move Entry",
             "CallingType": "json",
             "Exposure": "public"
-          },                
+          },
           {
             "Name": "getMoves",
             "Comment": "Get all Moves of a Challenge",
             "CallingType": "json",
             "Exposure":"public"
-          }              
+          }
       ]
     }
   ]
