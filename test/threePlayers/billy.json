@@ -1,0 +1,99 @@
+{
+  "Identity": "billy",
+  "Fixtures": {
+    "Agents": null
+  },
+  "Tests":
+  [
+    {
+      "Convey"  : "get handles",
+      "Time"    : 3000,
+      "Zome"    : "Holochess",
+      "FnName"  : "getAllHandles",
+      "Input"   : "",
+      "Output"  : [
+        {"Entry":"%alex_str%","Hash":"%alex_key%"},
+        {"Entry":"%billy_str%","Hash":"%billy_key%"},
+        {"Entry":"%camille_str%","Hash":"%camille_key%"}],
+      "Exposure": "public",
+      "Regexp"  : ""
+    },
+    {
+      "Convey"  : "Challenge camille",
+      "Time"    : 3100,
+      "Zome"    : "Holochess",
+      "FnName"  : "commitChallenge",
+      "Input": {
+        "timestamp": 123456,
+        "challengee": "%camille_key%",
+        "challengerPlaysWhite": true,
+        "isGamePublic": true
+      },
+      "Output"  : "%h2%",
+      "Exposure": "public",
+      "Regexp"  : ""
+    },
+    {
+      "Convey"  : "get my games: should have two",
+      "Time"    : 5000,
+      "Zome"    : "Holochess",
+      "FnName"  : "getMyGames",
+      "Input"   : "",
+      "Output"  : [
+        {
+          "Entry":{
+            "challengee":"%billy_key%",
+            "challenger":"%alex_key%",
+            "challengerPlaysWhite":true,
+            "isGamePublic":true,
+            "timestamp":123456
+          },
+          "Hash":"QmXrNbgEkJ82X6EvUkMKJrizhpHyhinPei6VMg91DBzcfz"
+        },
+        {
+          "Entry":{
+            "challengee":"%camille_key%",
+            "challenger":"%billy_key%",
+            "challengerPlaysWhite":true,
+            "isGamePublic":true,
+            "timestamp":123456},
+          "Hash":"QmaBdtySrj7oQwG1c1tn5ZSpDBXFa6epNicg8ReBqATZvF"
+        }
+      ],
+      "Exposure": "public",
+      "Regexp"  : ""
+    },
+    {
+      "Convey"  : "get all games: should have three",
+      "Time"    : 6000,
+      "Zome"    : "Holochess",
+      "FnName"  : "getGames",
+      "Input"   : "",
+      "Output"  : {
+        "QmPFAhChbPVR8Dch1myx4auPMsc75TJSeCJmZEU6ZB2F6M": {
+          "challengee": "%alex_key%",
+          "challenger": "%camille_key%",
+          "challengerPlaysWhite": true,
+          "isGamePublic": true,
+          "timestamp": 123456
+        },
+        "QmXrNbgEkJ82X6EvUkMKJrizhpHyhinPei6VMg91DBzcfz": {
+          "challengee": "%billy_key%",
+          "challenger": "%alex_key%",
+          "challengerPlaysWhite": true,
+          "isGamePublic": true,
+          "timestamp": 123456
+        },
+        "QmaBdtySrj7oQwG1c1tn5ZSpDBXFa6epNicg8ReBqATZvF": {
+          "challengee": "%camille_key%",
+          "challenger": "%billy_key%",
+          "challengerPlaysWhite": true,
+          "isGamePublic": true,
+          "timestamp": 123456
+        }
+      },
+      "Exposure": "public",
+      "Regexp"  : ""
+    }
+  ]
+}

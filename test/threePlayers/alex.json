@@ -1,0 +1,37 @@
+{
+  "Identity": "alex",
+  "Fixtures": {
+    "Agents": null
+  },
+  "Tests":
+  [
+    {
+      "Convey"  : "get handles",
+      "Time"    : 3000,
+      "Zome"    : "Holochess",
+      "FnName"  : "getAllHandles",
+      "Input"   : "",
+      "Output"  : [
+        {"Entry":"%alex_str%","Hash":"%alex_key%"},
+        {"Entry":"%billy_str%","Hash":"%billy_key%"},
+        {"Entry":"%camille_str%","Hash":"%camille_key%"}],
+      "Exposure": "public",
+      "Regexp"  : ""
+    },
+    {
+      "Convey"  : "Challenge billy",
+      "Time"    : 3100,
+      "Zome"    : "Holochess",
+      "FnName"  : "commitChallenge",
+      "Input": {
+        "timestamp": 123456,
+        "challengee": "%billy_key%",
+        "challengerPlaysWhite": true,
+        "isGamePublic": true
+      },
+      "Output"  : "%h2%",
+      "Exposure": "public",
+      "Regexp"  : ""
+    }
+  ]
+}

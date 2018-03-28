@@ -45,7 +45,8 @@ function getMyHash()
 
 
 /**
- *  return array of handle_links with Agent's hash as key
+ *  return array of all handle_links where
+ *  Hash is handle's agent's hashkey.
  */
 function getAllHandles()
 {
@@ -54,8 +55,13 @@ function getAllHandles()
   {
     return [];
   }
-  // Sort alphabetically by name
-  linkArray.sort(function (a, b) {a.Entry.localeCompare(b.Entry)} );
+  // Sort alphabetically by handle
+  linkArray.sort(function (a, b) // {a.Entry.localeCompare(b.Entry)} );
+    {
+      if(a.Entry < b.Entry) return -1;
+      if(a.Entry > b.Entry) return 1;
+      return 0;
+    });
   return linkArray;
 }
 
@@ -200,22 +206,74 @@ function getChallenge(hash)
  *  return array of entries of challenges that corresponds to query parameters
  *  sorted by timestamp
  */
-function getMyGames(/* stateMask, challengerHash, challengeeHash */)
+function getGamesFromPlayer(hash /*, stateMask, challengerHash, challengeeHash */)
 {
-  // debug("getMyGames:");
+  debug("getGamesFromPlayer: " + hash);
   // getLinks from DHT
-  var initiatedChallenges = getEntriesFromLinks(ME, "initiated");
-  var receivedChallenges  = getEntriesFromLinks(ME, "received");
+  var initiatedChallenges = getEntriesFromLinks(hash, "initiated");
+  var receivedChallenges  = getEntriesFromLinks(hash, "received");
   // debug("\t Initiated: " + initiatedChallenges.length + "  received: " + receivedChallenges.length);
 
   var myGames = initiatedChallenges.concat(receivedChallenges);
 
   // Sort by timestamp
-  myGames.sort(function (a, b) {return b.Entry.timestamp - a.Entry.timestamp;} );
-
+  myGames.sort(function(a, b) {return b.Entry.timestamp - a.Entry.timestamp;} );
+  debug("\t found: " + myGames.length);
   return myGames;
 }
 
+function getMyGames(/* stateMask, challengerHash, challengeeHash */)
+{
+  return getGamesFromPlayer(ME);
+}
+
+
+/**
+ *  return array of entries of challenges that corresponds to query parameters
+ *  sorted by timestamp
+ *  return Object containing Hash->Entry properties
+ */
+function getGamesMapFromPlayer(hash /*, stateMask, challengerHash, challengeeHash */)
+{
+  debug("getGamesMapFromPlayer: " + hash);
+  // getLinks from DHT
+  var initiatedChallenges = getEntriesMapFromLinks(hash, "initiated");
+  var receivedChallenges  = getEntriesMapFromLinks(hash, "received");
+  debug("\t Initiated: " + Object.keys(initiatedChallenges).length + "  received: " + Object.keys(receivedChallenges).length);
+
+  // Merge Maps
+  // var myGames = Object.assign({}, initiatedChallenges, receivedChallenges);
+  var myGames = Object();
+  for (var attrname in initiatedChallenges) { myGames[attrname] = initiatedChallenges[attrname]; }
+  for (var attrname in receivedChallenges)  { myGames[attrname] = receivedChallenges[attrname]; }
+
+  debug("\t found: " + Object.keys(myGames).length);
+  return myGames;
+}
+
+/**
+ *  return array of entries of challenges that corresponds to query parameters
+ *  sorted by timestamp
+ */
+function getGames(/* stateMask, challengerHash, challengeeHash */)
+{
+  var handleLinksArray = getAllHandles();
+  var allGames = Object();
+  for(var i = 0; i < handleLinksArray.length; i++)
+  {
+    var map = getGamesMapFromPlayer(handleLinksArray[i].Hash);
+    // Object.assign(allGames, map);
+    for (var attrname in map) { allGames[attrname] = map[attrname]; }
+  }
+
+  // Remove duplicate
+  // var uniqueGames = allGames.filter(onlyUnique);
+  // debug("\t total: " + allGames.length + " / " + uniqueGames.length);
+  // Sort?
+  // Done
+  debug("TOTAL: " + Object.keys(allGames).length);
+  return allGames;
+}
 
 // ==============================================================================
 // HELPERS: unexposed functions
@@ -261,6 +319,37 @@ function getEntriesFromLinks(base, tag, canSourceBeHash)
   }
   //debug("\t" + JSON.stringify(miniLinkArray));
   return miniLinkArray;
+}
+
+
+/**
+ * Helper for the "getLinks" with load call.
+ * Handle the no-link error case.
+ * Copy the returned entry values into a nicer array
+ " @param canSourceBeHash if TRUE attribute Hash will be hash of the Source
+ */
+function getEntriesMapFromLinks(base, tag, canSourceBeHash)
+{
+  // debug("getEntriesMapFromLinks: " + base + " | tag : " + tag + " | " + canSourceBeHash);
+  // Get the tag from the base in the DHT
+  var links = getLinks(base, tag, {Load:true});
+
+  // Handle error
+  if (hasErrorOccurred(links))
+  {
+    debug("getEntriesMapFromLinks failed: " + base + " | tag : " + tag);
+    return [];
+  }
+
+  // Build hashtable with just Entry value
+  var map = {};
+  for (var i = 0; i < links.length; i++)
+  {
+    var hash = (typeof canSourceBeHash !== 'undefined'? links[i].Source : links[i].Hash);
+    map[hash] = links[i].Entry;
+  }
+  //debug("\t" + JSON.stringify(map));
+  return map;
 }
 
 

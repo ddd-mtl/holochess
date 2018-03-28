@@ -114,6 +114,12 @@
             "Exposure":"public"
           },
           {
+            "Name": "getGames",
+            "Comment": "Get some Challenges",
+            "CallingType": "json",
+            "Exposure":"public"
+          },
+          {
             "Name": "commitMove",
             "Comment": "Commit Move Entry",
             "CallingType": "json",
