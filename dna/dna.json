@@ -39,6 +39,20 @@
               "Sharing": "public"
           },
           {
+            "Name": "private_challenge",
+            "DataFormat": "json",
+            "Comment": "Private chess game initiation entry",
+            "SchemaFile": "challenge.json",
+            "Sharing": "private"
+          },
+          {
+            "Name": "private_move",
+            "DataFormat": "json",
+            "Comment": "Chess half-move entry for a specific private game",
+            "SchemaFile": "move.json",
+            "Sharing": "private"
+          },
+          {
               "Name": "handle_links",
               "DataFormat": "links",
               "Base": "agent",
@@ -102,6 +116,12 @@
             "Exposure": "public"
           },
           {
+            "Name": "requestPrivateChallenge",
+            "Comment": "Initiate Private Challenge",
+            "CallingType": "json",
+            "Exposure": "public"
+          },
+          {
             "Name": "getChallenge",
             "Comment": "Get Challenge entry from hash",
             "CallingType": "json",
@@ -109,28 +129,46 @@
           },
           {
             "Name": "getMyGames",
-            "Comment": "Get all local Agent's Challenges",
+            "Comment": "Get all this Agent's Challenges",
             "CallingType": "json",
             "Exposure":"public"
           },
-          {
-            "Name": "getGames",
-            "Comment": "Get some Challenges",
-            "CallingType": "json",
-            "Exposure":"public"
-          },
-          {
-            "Name": "commitMove",
-            "Comment": "Commit Move Entry",
-            "CallingType": "json",
-            "Exposure": "public"
-          },
-          {
-            "Name": "getMoves",
-            "Comment": "Get all Moves of a Challenge",
-            "CallingType": "json",
-            "Exposure":"public"
-          }
+        {
+          "Name": "getMyPrivateGames",
+          "Comment": "Get all this Agent's PrivateChallenges",
+          "CallingType": "json",
+          "Exposure":"public"
+        },
+        {
+          "Name": "getGames",
+          "Comment": "Get some Challenges",
+          "CallingType": "json",
+          "Exposure":"public"
+        },
+        {
+          "Name": "commitMove",
+          "Comment": "Commit Move Entry",
+          "CallingType": "json",
+          "Exposure": "public"
+        },
+        {
+          "Name": "commitPrivateMove",
+          "Comment": "Commit Private Move Entry",
+          "CallingType": "json",
+          "Exposure": "public"
+        },
+        {
+          "Name": "getMoves",
+          "Comment": "Get all Moves of a Challenge",
+          "CallingType": "json",
+          "Exposure":"public"
+        },
+        {
+          "Name": "getPrivateChallengeState",
+          "Comment": "Get current state of a Private Challenge in FEN",
+          "CallingType": "string",
+          "Exposure":"public"
+        }
       ]
     }
   ]
