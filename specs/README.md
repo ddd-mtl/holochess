@@ -16,20 +16,20 @@
 ### Links
 
 - handle_links:
-  - Binds handle to agent, tag: "handle"  
-- challenge_links: 
+  - Binds handle to agent, tag: "handle"
+- challenge_links:
   - Binds challenge to challenger, tag: "initiated"
   - Binds challenge to challengee, tag: "received"
 - move_links:
   - Binds move to challenge, tag: "halfmove"
-- directory_links: 
+- directory_links:
   - Binds agent to App ("directory" anchor), tag: "player"
 
 
 <br/>
 
 ## Order of events
- 
+
 :warning: **DOCUMENTATION OUT OF DATE** :warning:
 
 1. Challenge an Opponent
@@ -50,7 +50,7 @@ Send a challenge request to an opponent. Fields:
 
   4. Player sends endgame move (in SAN)
    - Claim victory
-   - Claims draw   
+   - Claims draw
    - Declares forfeit
 
   5. Modify challenge to notify game is over and number of moves?
@@ -65,10 +65,10 @@ Opponent must accept challenge, otherwise challenger can delete his challenge.
 
 ## Tests
 
-Unit tests and scenarios are still in development and will not pass. :broken_heart:
+Unit tests available
 
 ### Scenarios
 
-#### Scenario - One Move Challenge
-
-TODO
+ - challengeOneMove : Tests first moves of a two player public game.
+ - PrivateChallenge : Tests first moves of a two player *private* game
+ - threePlayers     : Tests multiple challenges at the same time with 3 different players
