@@ -6,7 +6,7 @@
   "Tests":
   [
     {
-      "Convey"  : "getMyHandle: My handle should be my Agent.String",
+      "Convey"  : "0. getMyHandle: My handle should be my Agent.String",
       "Zome"    : "Holochess",
       "FnName"  : "getMyHandle",
       "Input"   : "",
@@ -14,7 +14,7 @@
       "Exposure": "public"
     },
     {
-      "Convey"  : "get my games: should not have any",
+      "Convey"  : "1. Get my games: should not have any",
       "Zome"    : "Holochess",
       "FnName"  : "getMyGames",
       "Input"   : "",
@@ -23,7 +23,7 @@
       "Regexp"  : ""
     },
     {
-      "Convey"  : "get challenger's handle",
+      "Convey"  : "2. Get challenger's handle",
       "Time"    : 5000,
       "Zome"    : "Holochess",
       "FnName"  : "getAllHandles",
@@ -33,7 +33,7 @@
       "Regexp"  : ""
     },
     {
-      "Convey"  : "Wait for challenger's challenge.",
+      "Convey"  : "3. Wait for challenger's challenge.",
       "Time"    : 10000,
       "Zome"    : "Holochess",
       "FnName"  : "getMyGames",
@@ -51,7 +51,7 @@
       "Regexp"  : ""
     },
     {
-      "Convey"  : "Wait for challenger's first move",
+      "Convey"  : "4. Wait for challenger's first move",
       "Time"    : 15000,
       "Zome"    : "Holochess",
       "FnName"  : "getMoves",
@@ -61,7 +61,7 @@
       "Regexp"  : ""
     },
     {
-      "Convey"  : "Play bad 2nd half-move: bad index",
+      "Convey"  : "5. Play bad 2nd half-move: bad index",
       "Time"    : 15500,
       "Zome"    : "Holochess",
       "FnName"  : "commitMove",
@@ -71,11 +71,10 @@
         "index"         : 0
       },
       "Exposure": "public",
-      "ErrMsg" : "Validation Failed",
-      "Regexp"  : ""
+      "Regexp" : "Validation Failed"
     },
     {
-      "Convey"  : "Play bad 2nd half-move: invalid move",
+      "Convey"  : "6. Play bad 2nd half-move: invalid move",
       "Time"    : 15500,
       "Zome"    : "Holochess",
       "FnName"  : "commitMove",
@@ -85,11 +84,10 @@
         "index"         : 1
       },
       "Exposure": "public",
-      "ErrMsg" : "Validation Failed",
-      "Regexp"  : ""
+      "Regexp" : "Validation Failed"
     },
     {
-      "Convey"  : "Play valid 2nd half-move",
+      "Convey"  : "7. Play valid 2nd half-move",
       "Time"    : 15500,
       "Zome"    : "Holochess",
       "FnName"  : "commitMove",

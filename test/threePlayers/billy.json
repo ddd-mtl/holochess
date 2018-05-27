@@ -35,7 +35,7 @@
     },
     {
       "Convey"  : "get my games: should have two",
-      "Time"    : 5000,
+      "Time"    : 10000,
       "Zome"    : "Holochess",
       "FnName"  : "getMyGames",
       "Input"   : "",
@@ -65,7 +65,7 @@
     },
     {
       "Convey"  : "get all games: should have three",
-      "Time"    : 6000,
+      "Time"    : 11000,
       "Zome"    : "Holochess",
       "FnName"  : "getGames",
       "Input"   : "",

@@ -2,28 +2,28 @@
   "title": "Challenge Schema",
   "type": "object",
   "properties": {
-		"challenger": {
-			"type": "string",
+    "challenger": {
+      "type": "string",
       "comment": "Hash of Agent who initiated the challenger.",
       "constraints": "Must be self (Source)."
-		},      
-		"challengee": {
-			"type": "string",
+    },
+    "challengee": {
+      "type": "string",
       "comment": "Hash of Agent who receives the challenge.",
       "constraints": "Must be an Agent Hash different from Challenger (Source)."
     },
     "timestamp": {
       "type": "integer",
       "comment": "Might be removed in the future by entry-header's timestamp."
-    },            
+    },
     "challengerPlaysWhite": {
-        "type": "boolean",
-        "comment": "If TRUE Challenger will play as White."
+      "type": "boolean",
+      "comment": "If TRUE Challenger will play as White."
     },
     "isGamePublic": {
       "type": "boolean",
       "comment": "If TRUE the game's Moves will be published on the DHT, otherwise will only be on each player's source chains."
-    }    
+    }
   },
   "required": ["challenger", "challengee", "timestamp"]
 }

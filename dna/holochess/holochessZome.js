@@ -73,9 +73,9 @@ function getAllHandles()
  */
 function getMyHandle()
 {
-  debug("getMyHandle");
+  //debug("getMyHandle");
   var handle = getHandle(ME);
-  debug("\t" + handle);
+  //debug("\t" + handle);
   return handle;
 }
 
@@ -104,8 +104,11 @@ function commitInitialHandle(handle)
 
    // On my source chain, commit a new handle entry
   var handleHash = commit("handle", handle);
-
   debug("commitInitialHandle:" + handle + " stored at " + handleHash);
+  if(isErr(handleHash))
+  {
+    return handleHash;
+  }
 
   // On DHT, set links to my handle
   commit("handle_links", {Links:[{Base:ME,Link:handleHash,Tag:"handle"}]});
@@ -120,26 +123,29 @@ function commitInitialHandle(handle)
 // ==============================================================================
 
 /**
- *  Create a Challenge Entry
+ *  Create a Challenge Entry from a Challenge Object
  */
-function commitChallenge(challenge)
+function commitChallenge(oChallenge)
 {
-  if(!challenge)
+  if(!oChallenge)
   {
     return null;
   }
-  challenge.challenger = ME;
+  oChallenge.challenger = ME;
 
-  debug("commitChallenge: "+ JSON.stringify(challenge));
+  //debug("commitChallenge: "+ JSON.stringify(oChallenge));
 
-  // commit challenge entry to my source chain
-  var challengeHash = commit('challenge', challenge);
+  // commit oChallenge entry to my source chain
+  var challengeHash = commit('challenge', oChallenge);
+  //debug("new oChallenge: "+ challengeHash + "\n\t challenger: " + ME + "\n\t challengee  :" + oChallenge.challengee);
+  if(isErr(challengeHash))
+  {
+    return challengeHash;
+  }
 
-  debug("new challenge: "+ challengeHash + "\n\t challenger: " + ME + "\n\t challengee  :" + challenge.challengee);
-
-  // On the DHT, put a link on my hash, and my opponents hash, to the new challenge.
+  // On the DHT, put a link on my hash, and my opponents hash, to the new oChallenge.
   commit("challenge_links", {Links:[{Base:ME, Link:challengeHash ,Tag:"initiated"}]});
-  commit("challenge_links", {Links:[{Base:challenge.challengee, Link:challengeHash,Tag:"received"}]});
+  commit("challenge_links", {Links:[{Base:oChallenge.challengee, Link:challengeHash,Tag:"received"}]});
   return challengeHash;
 }
 
@@ -147,20 +153,25 @@ function commitChallenge(challenge)
 /**
  *  Create a Challenge Entry
  */
-function commitPrivateChallenge(challenge)
+function commitPrivateChallenge(challengerHash, challengeeHash, canChallengerPlayWhite, timestamp)
 {
-  if(!challenge)
-  {
-    return null;
-  }
-  challenge.challenger = ME;
+  // FIXME check args
 
-  debug("commitPrivateChallenge: "+ JSON.stringify(challenge));
+  // Create Holochain Entry
+  var challengeEntry = {
+    challenger           : challengerHash,
+    challengee           : challengeeHash,
+    timestamp            : timestamp,
+    challengerPlaysWhite : canChallengerPlayWhite,
+    isGamePublic         : false
+  };
+
+  //debug("commitPrivateChallenge: " + JSON.stringify(challengeEntry));
 
   // commit challenge entry to my source chain
-  var challengeHash = commit('private_challenge', challenge);
+  var challengeHash = commit('private_challenge', challengeEntry);
+  debug("new private challenge: " + challengeHash);
 
-  debug("new challenge: "+ challengeHash + "\n\t challenger: " + ME + "\n\t challengee  :" + challenge.challengee);
   return challengeHash;
 }
 
@@ -179,6 +190,10 @@ function commitMove(move)
   // Build and commit move entry to my source chain
   var moveHash = commit('move', move);
   debug("\tmove hash: " + moveHash);
+  if(isErr(moveHash))
+  {
+    return moveHash;
+  }
   // On the DHT, put a link on the challenge's hash to the new move.
   commit("move_links", {Links:[{Base:move.challengeHash,Link:moveHash,Tag:"halfmove"}]});
   return moveHash;
@@ -237,9 +252,30 @@ function getChallenge(hash)
   var challenge = get(hash);
   debug("Challenge: " + challenge);
 
-  // Return
+  // FIXME check entryType
+
+  // Done
   return JSON.parse(challenge);
   //return challenge; // Depends on Holochain version?
+}
+
+
+/**
+ *
+ * @param challengeHash Hash of Challenge to retrieve
+ * @returns {*} The Challenge entry object, null otherwise
+ */
+function getPrivateChallenge(challengeHash)
+{
+  var challenge = get(challengeHash, {Local: true, GetMask: HC.GetMask.Entry + HC.GetMask.EntryType });
+  //debug("\tchallengeEntry = " + JSON.stringify(challenge));
+  if(challenge === HC.HashNotFound || challenge.EntryType !== "private_challenge")
+  {
+    debug("validatePrivateMove FAILED: Challenge not found");
+    debug("\t CHALLENGE = " + challengeHash);
+    return null;
+  }
+  return challenge.Entry;
 }
 
 
@@ -250,6 +286,7 @@ function getChallenge(hash)
  */
 function getMyPrivateMoves(challengeHash)
 {
+  debug("getMyPrivateMoves: " + challengeHash);
   var result = query({
     Return: {
       Hashes:false,
@@ -257,14 +294,19 @@ function getMyPrivateMoves(challengeHash)
     },
     Constrain: {
       EntryTypes: ["private_move"],
-      Equals  : {"challengeHash":challengeHash}
+      Contains  : "{\"challengeHash\":\"" + challengeHash + "\"}"
     }
   });
-  debug("Query result:\n" + result);
+  //debug("Query result:\n" + JSON.stringify(result));
+  if(!result || result.length === 0)
+  {
+    return [];
+  }
   // Sort by move index
-  var moves = JSON.parse(result);
+  // var moves = JSON.parse(result);
+  var moves = result;
   moves.sort(function (a, b) {return a.index - b.index;} );
-  debug("Sorted result:\n" + JSON.stringify(moves));
+  //debug("Sorted result:\n" + JSON.stringify(moves));
   return result;
 }
 
@@ -285,7 +327,7 @@ function getGamesFromPlayer(hash /*, stateMask, challengerHash, challengeeHash *
 
   // Sort by timestamp
   myGames.sort(function(a, b) {return b.Entry.timestamp - a.Entry.timestamp;} );
-  debug("\t found: " + myGames.length);
+  debug("\t found: " + myGames.length + " game(s)");
   return myGames;
 }
 
@@ -296,6 +338,7 @@ function getGamesFromPlayer(hash /*, stateMask, challengerHash, challengeeHash *
  */
 function getMyPrivateGames(/* stateMask, challengerHash, challengeeHash */)
 {
+  debug("getMyPrivateGames");
   var asChallengerResult = query({
     Return: {
       Hashes:true,
@@ -303,9 +346,10 @@ function getMyPrivateGames(/* stateMask, challengerHash, challengeeHash */)
     },
     Constrain: {
       EntryTypes: ["private_challenge"],
-      Equals  : {"challenger":ME}
+      Equals  : "{\"challenger\":\"" + ME + "\"}"
     }
   });
+  //debug("asChallenger query result:\n" + JSON.stringify(asChallengerResult));
   var asChallengeeResult = query({
     Return: {
       Hashes:true,
@@ -313,12 +357,13 @@ function getMyPrivateGames(/* stateMask, challengerHash, challengeeHash */)
     },
     Constrain: {
       EntryTypes: ["private_challenge"],
-      Equals  : {"challengee":ME}
+      Equals  : "{\"challengee\":\"" + ME + "\"}"
     }
   });
-  var allMyPrivateChallenges = JSON.parse(asChallengerResult).concat(JSON.parse(asChallengeeResult));
-  debug("getMyPrivateGames result:\n" + JSON.stringify(allMyPrivateChallenges));
-  return result;
+  //debug("query result:\n" + JSON.stringify(asChallengeeResult));
+  var allMyPrivateChallenges = asChallengerResult.concat(asChallengeeResult);
+  //debug("getMyPrivateGames result:\n" + JSON.stringify(allMyPrivateChallenges));
+  return allMyPrivateChallenges;
 }
 
 
@@ -383,24 +428,31 @@ function getGames(/* stateMask, challengerHash, challengeeHash */)
 // Private Game stuff
 // ==============================================================================
 
-function requestPrivateChallenge(challengeeHash, canChallengerPlayWhite)
+function requestPrivateChallenge(privateChallenge)
 {
-  // var myPrivateChallenge = commitPrivateChallenge(canChallengerPlayWhite);
-  var response = send(challengeeHash, { type: "privateChallengeReq", canChallengerPlayWhite: canChallengerPlayWhite });
+  //debug("!!! requestPrivateChallenge | privateChallenge = " + JSON.stringify(privateChallenge))
+  var msg = {
+    type: "privateChallengeReq",
+    canChallengerPlayWhite: privateChallenge.challengerPlaysWhite,
+    timestamp:  privateChallenge.timestamp
+  }
+  var response = send(privateChallenge.challengee, msg);
+  //debug("requestPrivateChallenge Response = " + response)
   response = JSON.parse(response);
 
-  if(!response || !response.privateChallenge)
+  if(!response || !response.privateChallengeHash)
   {
     return { error: "challengee refused challenge" };
   }
 
   // create our own copy of the challenge according call from the responder
-  var myPrivateChallenge = commitPrivateChallenge(ME, challengeeHash, canChallengerPlayWhite);
-  if (myPrivateChallenge != response.privateChallenge)
+  var myPrivateChallengeHash = commitPrivateChallenge(ME, privateChallenge.challengee, privateChallenge.challengerPlaysWhite, privateChallenge.timestamp);
+  //debug("\t myPrivateChallenge = " + JSON.stringify(myPrivateChallengeHash))
+  if (myPrivateChallengeHash !== response.privateChallengeHash)
   {
     return { error: "challenge didn't match!" };
   }
-  return { privateChallenge: myPrivateChallenge };
+  return { privateChallengeHash: myPrivateChallengeHash };
 }
 
 
@@ -409,9 +461,10 @@ function requestPrivateChallenge(challengeeHash, canChallengerPlayWhite)
  */
 function requestOpponentsPrivateMoves(privateChallengeHash)
 {
+  debug("requestOpponentsPrivateMoves");
   // retrieve opponent's hash from challengeHash
-  var challengeEntry = get(privateChallengeHash);
-  if(challengeEntry === HC.HashNotFound)
+  var challengeEntry = getPrivateChallenge(privateChallengeHash);
+  if(!challengeEntry)
   {
     return null;
   }
@@ -420,17 +473,22 @@ function requestOpponentsPrivateMoves(privateChallengeHash)
     return null;
   }
   var opponentHash = ME === challengeEntry.challenger?
-    challengeEntry.challengee
-  : challengeEntry.challenger;
+                                challengeEntry.challengee
+                              : challengeEntry.challenger;
 
   // send request
-  var response = send(opponentHash, {type: "movesReq", privateChallengeHash: privateChallengeHash});
-  response = JSON.parse(response);
-  if(!response || !response.moves)
-  {
-    return { error: "requestOpponentsPrivateMoves send failed" };
+  var msg = {
+    type                : "movesReq",
+    privateChallengeHash: privateChallengeHash
   }
-  return response.moves;
+  var response = send(opponentHash, msg);
+  //debug("\t response = " + response);
+  var moves = JSON.parse(response);
+  if(!moves || !moves.length === 0)
+  {
+    return [];
+  }
+  return moves;
 }
 
 
@@ -440,19 +498,49 @@ function requestOpponentsPrivateMoves(privateChallengeHash)
  * private moves
  * sorting them and running them in the chess engine
  */
+function getPrivateChallengeFenState(challengeHash)
+{
+  //return "42";
+  var chessEngine = getPrivateChallengeState(challengeHash);
+  return chessEngine? chessEngine.fen() : "";
+}
+
+
+/**
+ *
+ * @param challengeHash
+ * @returns {Object} chessEngine holding current game state
+ */
 function getPrivateChallengeState(challengeHash)
 {
   // Get each player's moves
+  var myMoves       = getMyPrivateMoves(challengeHash);
+  //debug("myMoves = " + JSON.stringify(myMoves));
   var opponentMoves = requestOpponentsPrivateMoves(challengeHash);
-  var myMoves = getMyPrivateMoves(challengeHash);
-  if(!opponentMoves || !myMoves)
+  //debug("opponentMoves = " + JSON.stringify(opponentMoves));
+
+  // Start new game if no moves made on both sides
+  if( (!opponentMoves || opponentMoves.length === 0) &&
+      (!myMoves || myMoves.length === 0))
   {
-    debug("getPrivateChallengeState FAILED");
-    return "";
+    return new Chess();
   }
 
-  // concat and sort
-  var moves = myMoves.concat(opponentMoves);
+  // concat and sort all moves
+  var moves = [];
+  if(!opponentMoves || opponentMoves.length === 0)
+  {
+    moves = myMoves;
+  }
+  else if(!myMoves || myMoves.length === 0)
+  {
+    moves = opponentMoves;
+  }
+  else
+  {
+    moves = myMoves.concat(opponentMoves);
+  }
+  //debug("moves = " + JSON.stringify(moves));
   moves.sort(function (a, b) {return a.index - b.index;} );
 
 
@@ -460,16 +548,16 @@ function getPrivateChallengeState(challengeHash)
   var chessEngine = new Chess();
   for(var i = 0; i < moves.length; i++)
   {
-    var move = chessEngine.move(moves[i]);
+    var move = chessEngine.move(moves[i].san);
     if(move === null)
     {
-      debug("getPrivateChallengeState FAILED: Chess game playback failed on move " + i + "." + moves[i]);
-      return "";
+      debug("getPrivateChallengeState FAILED: Chess game playback failed on move " + i + "." + JSON.stringify(moves[i]));
+      return null;
     }
   }
-  // return FEN
-  debug("getPrivateChallengeState: " + chessEngine.FEN());
-  return chessEngine.FEN();
+  // return chessEngine
+  debug("getPrivateChallengeState: " + chessEngine.fen());
+  return chessEngine;
 }
 
 
@@ -597,17 +685,19 @@ function genesis()
  */
 function receive(from, msg)
 {
-  if(msg.type == 'privateChallengeReq')
+  if(msg.type === 'privateChallengeReq')
   {
+    // FIXME Add some thresholds for accepting challenge
     // Commit challenge on my chain
-    var myPrivateChallenge = commitPrivateChallenge(from, ME, msg.canChallengerPlayWhite);
-    return {privateChallenge: myPrivateChallenge};
+    var myPrivateChallengeHash = commitPrivateChallenge(from, ME, msg.canChallengerPlayWhite, msg.timestamp);
+    return {privateChallengeHash: myPrivateChallengeHash};
   }
-  else if(msg.type == 'movesReq')
+  else if(msg.type === 'movesReq')
   {
     // retrieve challengeEntry
-    var challengeEntry = get(privateChallengeHash);
-    if(challengeEntry === HC.HashNotFound)
+    //debug("movesReq : " + JSON.stringify(msg));
+    var challengeEntry = getPrivateChallenge(msg.privateChallengeHash);
+    if(!challengeEntry)
     {
       return null;
     }
@@ -655,8 +745,8 @@ function validateChallenge(entry, header, pkg, source)
  */
 function validateMove(entry, header, pkg, sources)
 {
-  //debug("VALIDATE MOVE - " + sources);
-  debug("VALIDATE MOVE ENTRY - " + JSON.stringify(entry));
+  //debug("VALIDATE MOVE - sources : " + sources);
+  //debug("VALIDATE MOVE ENTRY - " + JSON.stringify(entry));
 
   var sourceHash = sources[0];
 
@@ -731,7 +821,7 @@ function validateMove(entry, header, pkg, sources)
     return false;
   }
   // Done!
-  debug("validateMove SUCCESS");
+  //debug("validateMove SUCCESS");
   return true;
 }
 
@@ -741,7 +831,76 @@ function validateMove(entry, header, pkg, sources)
  */
 function validatePrivateMove(entry, header, pkg, sources)
 {
-  // FIXME
+  //debug("VALIDATE PRIVATE MOVE - sources : " + sources);
+  //debug("VALIDATE PRIVATE MOVE - entry   : " + JSON.stringify(entry));
+
+  var sourceHash = sources[0];
+
+  // get Challenge
+  var challenge = getPrivateChallenge(entry.challengeHash);
+  if(!challenge)
+  {
+    debug("validatePrivateMove FAILED: challenge not found");
+    return false;
+  }
+  //debug("\t vpv private challenge : " + JSON.stringify(challenge));
+
+  // Check Source is part of Challenge
+  if(challenge.challenger !== sourceHash && challenge.challengee !== sourceHash)
+  {
+    debug("validatePrivateMove FAILED: Challenge and Source don't match.");
+    debug("\t SOURCE     = " + sourceHash + " | " + typeof sourceHash);
+    debug("\t CHALLENGER = " + challenge.challenger + " | " + typeof challenge.challenger);
+    debug("\t CHALLENGEE = " + challenge.challengee + " | " + typeof challenge.challenger);
+    return false;
+  }
+
+  // get chessState
+  var chessEngine = getPrivateChallengeState(entry.challengeHash);
+  //debug("\t vpv chessEngine: " + chessEngine);
+
+  // Check if game is already over
+  if(chessEngine.game_over())
+  {
+    debug("validatePrivateMove FAILED: Chess game is already finished.");
+    return false;
+  }
+
+  // Check index
+  var moves = chessEngine.history();
+  if(moves.length !== entry.index)
+  {
+    debug("validatePrivateMove FAILED: Bad Move.index (" + moves.length + " != " + entry.index + ")");
+    return false;
+  }
+
+
+  // Check if its Source's turn
+  var isSourceWhite = (   challenge.challenger === sourceHash && challenge.challengerPlaysWhite
+    || challenge.challengee === sourceHash && !challenge.challengerPlaysWhite);
+  var canSourcePlay = ((entry.index % 2) === (!isSourceWhite % 2)); // White plays on even indices
+
+  //debug("\t vpv canSourcePlay = " + canSourcePlay );
+  //debug("\t CHALLENGER = " + challenge.challenger + " | " + sourceHash + " | " + challenge.challengerPlaysWhite);
+
+  if(!canSourcePlay)
+  {
+    debug("validatePrivateMove FAILED: Not Source's turn.");
+    debug("\t Source is " + (isSourceWhite? "White" : "Black")  + ". Move.index is " + entry.index);
+    return false;
+  }
+
+
+  // Try next move
+  var newMove = chessEngine.move(entry.san);
+  if(newMove === null)
+  {
+    debug("validatePrivateMove FAILED: New move is invalid ( " + entry.san + ")");
+    debug(chessEngine.fen());
+    return false;
+  }
+  // Done!
+  //debug("validatePrivateMove SUCCESS");
   return true;
 }
 

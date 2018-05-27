@@ -6,7 +6,7 @@
   "Tests":
   [
     {
-      "Convey"  : "getMyHandle: My handle should be my Agent.String",
+      "Convey"  : "0. getMyHandle: My handle should be my Agent.String",
       "Zome"    : "Holochess",
       "FnName"  : "getMyHandle",
       "Input"   : "",
@@ -14,17 +14,16 @@
       "Exposure": "public"
     },
     {
-      "Convey"  : "get challengee's handle",
+      "Convey"  : "1. Get challengee's handle",
       "Time"    : 3000,
       "Zome"    : "Holochess",
       "FnName"  : "getAllHandles",
       "Input"   : "",
       "Output"  : [{"Entry":"%agentstr%","Hash":"%key%"}, {"Entry":"%challengee_str%","Hash":"%challengee_key%"}],
-      "Exposure": "public",
-      "Regexp"  : ""
+      "Exposure": "public"
     },
     {
-      "Convey"  : "Challenge the challengee",
+      "Convey"  : "2. Challenge the challengee",
       "Time"    : 3100,
       "Zome"    : "Holochess",
       "FnName"  : "commitChallenge",
@@ -35,11 +34,10 @@
         "isGamePublic": true
       },
       "Output"  : "%h2%",
-      "Exposure": "public",
-      "Regexp"  : ""
+      "Exposure": "public"
     },
     {
-      "Convey"  : "Play bad first move: invalid move",
+      "Convey"  : "3. Play bad first move: invalid move",
       "Time"    : 3200,
       "Zome"    : "Holochess",
       "FnName"  : "commitMove",
@@ -49,11 +47,10 @@
         "index"         : 0
       },
       "Exposure": "public",
-      "ErrMsg" : "Validation Failed",
-      "Regexp"  : ""
+      "Regexp": "Validation Failed"
     },
     {
-      "Convey"  : "Play bad first move: invalid index",
+      "Convey"  : "4. Play bad first move: invalid index",
       "Time"    : 3300,
       "Zome"    : "Holochess",
       "FnName"  : "commitMove",
@@ -62,13 +59,11 @@
         "san"           : "e4",
         "index"         : 1
       },
-      "Output"  : "QmcpCCoYgtCTRKoXd4EsDytqh4FcZtpDKmMMzzLH3C9npa",
       "Exposure": "public",
-      "ErrMsg"  : "Validation Failed",
-      "Regexp"  : ""
+      "Regexp": "Validation Failed"
     },
     {
-      "Convey"  : "Play bad first move: bad challenge hash",
+      "Convey"  : "5. Play bad first move: bad challenge hash",
       "Time"    : 3400,
       "Zome"    : "Holochess",
       "FnName"  : "commitMove",
@@ -79,11 +74,10 @@
       },
       "Output"  : "QmcpCCoYgtCTRKoXd4EsDytqh4FcZtpDKmMMzzLH3C9npa",
       "Exposure": "public",
-      "ErrMsg"  : "Validation Failed",
-      "Regexp"  : ""
+      "Regexp"  : "Validation Failed"
     },
     {
-      "Convey"  : "Play valid first move",
+      "Convey"  : "6. Play valid first move",
       "Time"    : 4000,
       "Zome"    : "Holochess",
       "FnName"  : "commitMove",
@@ -97,7 +91,7 @@
       "Regexp"  : ""
     },
     {
-      "Convey"  : "Play 2nd move before challengee plays",
+      "Convey"  : "7. Play 2nd move before challengee plays",
       "Time"    : 8000,
       "Zome"    : "Holochess",
       "FnName"  : "commitMove",
@@ -107,8 +101,7 @@
         "index"         : 1
       },
       "Exposure": "public",
-      "ErrMsg" : "Validation Failed",
-      "Regexp"  : ""
+      "Regexp"  : "Validation Failed"
     }
   ]
 }
