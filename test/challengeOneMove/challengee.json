@@ -56,7 +56,7 @@
       "Zome"    : "Holochess",
       "FnName"  : "getMoves",
       "Input"   : "QmXrNbgEkJ82X6EvUkMKJrizhpHyhinPei6VMg91DBzcfz",
-      "Output"  : ["e4"],
+      "Output"  : "e4",
       "Exposure": "public",
       "Regexp"  : ""
     },

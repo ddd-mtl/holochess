@@ -342,7 +342,7 @@ function getMyPrivateGames(/* stateMask, challengerHash, challengeeHash */)
   var asChallengerResult = query({
     Return: {
       Hashes:true,
-      Entries:false
+      Entries:true
     },
     Constrain: {
       EntryTypes: ["private_challenge"],
@@ -353,7 +353,7 @@ function getMyPrivateGames(/* stateMask, challengerHash, challengeeHash */)
   var asChallengeeResult = query({
     Return: {
       Hashes:true,
-      Entries:false
+      Entries:true
     },
     Constrain: {
       EntryTypes: ["private_challenge"],
@@ -500,9 +500,19 @@ function requestOpponentsPrivateMoves(privateChallengeHash)
  */
 function getPrivateChallengeFenState(challengeHash)
 {
-  //return "42";
   var chessEngine = getPrivateChallengeState(challengeHash);
   return chessEngine? chessEngine.fen() : "";
+}
+
+
+/**
+ * @param challengeHash hashkey of the challenge
+ * @returns {array} Array of SAN strings of the moves
+ */
+function getPrivateChallengeMoves(challengeHash)
+{
+  var chessEngine = getPrivateChallengeState(challengeHash);
+  return chessEngine? chessEngine.history() : [];
 }
 
 
@@ -816,7 +826,7 @@ function validateMove(entry, header, pkg, sources)
   var newMove = chessEngine.move(entry.san);
   if(newMove === null)
   {
-    debug("validateMove FAILED: New move is invalid ( " + entry.san + ")");
+    debug("validateMove FAILED: New move is invalid (" + entry.san + ")");
     debug(chessEngine.fen());
     return false;
   }

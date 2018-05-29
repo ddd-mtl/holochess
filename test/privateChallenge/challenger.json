@@ -114,6 +114,16 @@
       "Output"  : "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2",
       "Exposure": "public",
       "Regexp"  : ""
+    },
+    {
+      "Convey"  : "9. Get Private Challenge moves",
+      "Time"    : 20500,
+      "Zome"    : "Holochess",
+      "FnName"  : "getPrivateChallengeMoves",
+      "Input"   : "%h1%",
+      "Output"  : "e4,e5",
+      "Exposure": "public",
+      "Regexp"  : ""
     }
   ]
 }

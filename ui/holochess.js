@@ -43,12 +43,12 @@ var loadedGame;
 var moveCount;
 var myTurn;
 var challengeeHandle;
-var cachedSanArray;
+var cachedSanMoves;
 
 // APP Stateful variables
 var activeOpponentHash  = null;
 var activeChallengeHash = null;
-var myGames;         // Cache of all my Games
+var myGames = new Object();         // Cache of all my Games
 var cachedHandles;   // Cache of all known Handles on the holochain DHT
 
 
@@ -311,7 +311,7 @@ var board_onSnapEnd = function()
  */
 var board_onMoveEnd = function()
 {
-  console.log(squareToHighlight + ' into ' + (canWhitePlay? 'w' : 'b') + ' || '+ '.square-' + squareToHighlight);
+  // console.log(squareToHighlight + ' into ' + (canWhitePlay? 'w' : 'b') + ' || '+ '.square-' + squareToHighlight);
   boardEl.find('.square-' + squareToHighlight).addClass('highlight-' + canWhitePlay? 'w' : 'b');
 };
 
@@ -425,22 +425,38 @@ $('#reset-button').on('click', function()
  *
  * @param {*} challengeHash
  */
-var loadGame = function(challengeHash)
+var loadGame = function(challengeHash, isPrivate)
 {
   // if no input, reload current game
-  if(!challengeHash || challengeHash === undefined)
+  if(!challengeHash || challengeHash === undefined || typeof challengeHash !== "string")
   {
     challengeHash = g_loadedChallengeHash;
   }
+  if(isPrivate === undefined)
+  {
+    isPrivate = g_myGames[challengeHash].isPrivate;
+  }
+
+  // console.log("loadGame(" + challengeHash + ") | " + g_loadedChallengeHash);
   // First get all Moves from Holochain
-  return hcpGetMoves(challengeHash).then(
-          function(sanArray)
+  return hcpGetMoves(challengeHash, isPrivate).then(
+          function(sanMoves)
           {
+            // console.log("loadGame() sanMoves = " + sanMoves);
             // Don't do anything if no new move
-            if(sanArray && cachedSanArray && isEqual(sanArray, cachedSanArray))
+            if(sanMoves && cachedSanMoves && sanMoves === cachedSanMoves)
             {
+              // console.log("loadGame() NO NEW MOVE");
               return;
             }
+
+            // Change sanMoves string to array of strings
+            var sanArray = [];
+            if(sanMoves !== "")
+            {
+              var sanArray = sanMoves.split(',');
+            }
+            // console.log("loadGame() sanArray = " + JSON.stringify(sanArray));
 
             // Rebuild Game Panel
             // ==================
@@ -448,16 +464,23 @@ var loadGame = function(challengeHash)
             resetGamePanel();
 
             gameState      = GAME_STATE_CHALLENGE_VIEWING;
-            cachedSanArray = sanArray;
+            cachedSanMoves = sanMoves;
             canWhitePlay   = true;
 
             // Get Game
+            // console.log("loadGame() ");
             loadedGame = g_myGames[g_loadedChallengeHash]; // FIXME Game might not be ready to display
+            // if(loadedGame === undefined)
+            // {
+            //   // FIXME: debug this
+            //   console.log("Game not loaded: " + g_loadedChallengeHash);
+            //   return;
+            // }
 
             // Go through all the moves
             for(let i = 0; i < sanArray.length; i++)
             {
-              console.log("\t" + i + ". " + sanArray[i]);
+              // console.log("\t" + i + ". " + sanArray[i]);
               let move = gameEngine.move(sanArray[i]);
               if(move === null)
               {
@@ -534,7 +557,7 @@ var submitMove = function()
 
   // Update Game after HCP completes
   let movePromise = mustSubmitOnHolochain?
-                      hcpCommitMove(g_loadedChallengeHash, lastSan, moveCount)
+                      hcpCommitMove(g_loadedChallengeHash, lastSan, moveCount, loadedGame.isPrivate)
                     : Promise.resolve();
   movePromise.then(
     function(hash)
@@ -567,15 +590,36 @@ $("#challenge-button").on("click", function()
   hcpCommitChallenge(activeOpponentHash).then(
     function(challengeHash)
     {
+
       setSelectedPlayer(null);
       pmsRefreshMyGamesUl().then(
         function(/* std */)
         {
-          loadGame(challengeHash);
+          loadGame(challengeHash, false);
         });
     });
 });
 
+
+/**
+ * PRIVATE CHALLENGE BUTTON
+ *    Submit Challenge Entry if possible
+ *    update my Games list
+ *    load newly created Game
+ */
+$("#private-challenge-button").on("click", function()
+{
+  hcpCommitPrivateChallenge(activeOpponentHash).then(
+    function(challengeHash)
+    {
+      setSelectedPlayer(null);
+      pmsRefreshMyGamesUl().then(
+        function(/* std */)
+        {
+          loadGame(challengeHash, true);
+        });
+    });
+});
 
 /**
  * Update Player-Handles list
@@ -598,7 +642,12 @@ var pmsRefreshMyGamesUl = function()
   return hcpGetMyGames().then(
           function()
           {
-            buildMyGamesUl(g_myGames);
+            return hcpGetMyPrivateGames().then(
+              function()
+              {
+                buildMyGamesUl(g_myGames);
+              }
+            );
           }
           ).catch(
               function(err)
@@ -623,6 +672,7 @@ var setSelectedPlayer = function(agentHash)
     $(elem).addClass("selection");
   }
   $('#challenge-button').prop("disabled", activeOpponentHash == null);
+  $('#private-challenge-button').prop("disabled", activeOpponentHash == null);
 };
 
 
@@ -657,7 +707,7 @@ var setSelectedGame = function(challengeHash)
  */
 $("#my-games").on("click", "li", function()
 {
-  cachedSanArray = null;
+  cachedSanMoves = "";
   loadGame($(this).data('id'));
 });
 
@@ -810,7 +860,11 @@ var buildMyGamesUl = function(gameArray)
   {
     return;
   }
-  myGames = gameArray;
+  for(var i in gameArray)
+  {
+    myGames[i] = gameArray[i];
+  }
+
   // Check edge case: No games
   if(!gameArray || gameArray === undefined || Object.keys(gameArray).length === 0)
   {
@@ -825,6 +879,7 @@ var buildMyGamesUl = function(gameArray)
         "<li data-id=\"" + key + "\""
       + "data-name=\"" + key + "\">"
       + this[key].name
+      + (this[key].isPrivate? " [Private]" : "")
       + "</li>");
   }, gameArray);
   // Re-select active challenge
@@ -853,7 +908,7 @@ var resetGamePanel = function()
   moveCount             = 0;
   myTurn                = null;
   loadedGame            = null;
-  cachedSanArray        = null;
+  cachedSanMoves        = "";
 
   gameEngine.reset();
   board.clear();
@@ -866,6 +921,7 @@ var resetGamePanel = function()
   logEl.empty();
   logEl.append("<tr><th>#</th><th>White</th><th>Black</th></tr>");
   $('#challenge-button').prop("disabled", true);
+  $('#private-challenge-button').prop("disabled", true);
   $('#submit-button').prop("disabled", true);
   $('#undo-button').prop("disabled", true);
   $('#reset-button').prop("disabled", true);

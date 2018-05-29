@@ -14,7 +14,7 @@
 var g_myHash              = null; // Cached hash of this Agent
 var g_myHandle            = null; // Cached Handle of this Agent
 var g_loadedChallengeHash = null; // Hash of latest loaded Challenge
-var g_myGames             = null; // View-model for Challenges
+var g_myGames             = new Object(); // View-model for Challenges
 
 
 //===============================================================================
@@ -150,24 +150,27 @@ function hcpGetAllHandles()
 /**
  * Get all Moves related to a Challenge
  */
-function hcpGetMoves(challengeHash)
+function hcpGetMoves(challengeHash, isPrivate)
 {
-  console.log("hcpGetMoves called: " + challengeHash);
+  // console.log("hcpGetMoves called: " + challengeHash);
 
   g_loadedChallengeHash = challengeHash;
 
-  let promise = hcpJson("getMoves", JSON.stringify(challengeHash)); // because getMoves "CallingType" is "json"
+  //let promise = hcpJson("getMoves", JSON.stringify(challengeHash)); // because getMoves "CallingType" is "json"
+
+  let promise = hcp(isPrivate ? "getPrivateChallengeMoves" : "getMoves", challengeHash);
 
   return promise.then(
-          function(moveArray)
+          function(sanMoves)
           {
-            return moveArray;
+            //console.log("hcpGetMoves response: " + sanMoves);
+            return sanMoves;
           },
           function(err)
           {
             console.log("hcpGetMoves failed: " + err);
             g_loadedChallengeHash = null;
-            return [];
+            return "";
           });
 }
 
@@ -178,12 +181,12 @@ function hcpGetMoves(challengeHash)
  */
 function challenge2Game(challengeResponse)
 {
-  //console.log("hcp_getChallengeHandles called: " + JSON.stringify(challengeResponse));
   if (challengeResponse === undefined)
   {
     console.log("processChallenge abort: bad arguments");
     return Promise.reject(null);
   }
+  // console.log("challenge2Game called: " + JSON.stringify(challengeResponse));
   // Get challenger's handle
   return hcpGetHandle(challengeResponse.Entry.challenger).then(
           function(str)
@@ -231,10 +234,12 @@ function hcpGetMyGames()
             {
               // console.log("hcpGetMyGames response:\n" + JSON.stringify(challengeEntries) + "\n");
               // Create Games associated array with challenge's hash as key
-              g_myGames = new Object();
+              // g_myGames = new Object();
               for(let i = 0; i < challengeEntries.length; i++)
               {
                 g_myGames[challengeEntries[i].Hash] = challengeEntries[i].Entry;
+                g_myGames[challengeEntries[i].Hash].isPrivate = false;
+                // console.log("hcpGetMyGames g_myGames[challengeEntries[i].Hash] =\n" + JSON.stringify(g_myGames[challengeEntries[i].Hash]) + "\n");
               }
               return Promise.all(challengeEntries.map(challenge2Game));
             }).catch(
@@ -242,6 +247,33 @@ function hcpGetMyGames()
                  {
                   console.log("hcpGetMyGames failed: ", err);
                  });
+}
+
+
+/**
+ * Get all Challenges related to this Agent.
+ * For each Challenge get player's handles and setup view-model data.
+ */
+function hcpGetMyPrivateGames()
+{
+  return hcpJson("getMyPrivateGames").then(
+    function(challengeEntries)
+    {
+      // console.log("hcpGetMyPrivateGames response:\n" + JSON.stringify(challengeEntries) + "\n");
+      // Create Games associated array with challenge's hash as key
+      // g_myGames = new Object();
+      for(let i = 0; i < challengeEntries.length; i++)
+      {
+        g_myGames[challengeEntries[i].Hash] = challengeEntries[i].Entry;
+        // console.log("g_myGames[challengeEntries[i].Hash] = " + JSON.stringify(g_myGames[challengeEntries[i].Hash]));
+        g_myGames[challengeEntries[i].Hash].isPrivate = true;
+      }
+      return Promise.all(challengeEntries.map(challenge2Game));
+    }).catch(
+    function(err)
+    {
+      console.log("getMyPrivateGames failed: ", err);
+    });
 }
 
 
@@ -265,17 +297,87 @@ function hcpCommitChallenge(challengeeHash)
     timestamp           : new Date().valueOf(),
     challengee          : challengeeHash,
     challengerPlaysWhite: true,                  // FIXME: hardcoded
-    isGamePublic        : true                   // FIXME: hardcoded
+    isGamePublic        : true
+  };
+  // Create Promise to commit challenge and create game entry
+  return hcpJson("commitChallenge", JSON.stringify(challengeEntry)).then(
+    function(challengeHash)
+    {
+      //console.log("hcpCommitChallenge: " + challengeHash);
+      challengeEntry.challenger = g_myHash;
+      g_myGames[challengeHash] = challengeEntry;
+      //console.log("g_myGames[" + challengeHash + "] = " + JSON.stringify(g_myGames[challengeHash]));
+      g_myGames[challengeHash].isPrivate = false;
+
+      let challengeResponse = new Object();
+      challengeResponse.Entry = challengeEntry;
+      challengeResponse.Hash = challengeHash;
+      return challenge2Game(challengeResponse).then(
+        function()
+        {
+          // console.log("hcpCommitChallenge: challenge2Game done");
+          return challengeHash;
+        }
+    );
+    }).catch(
+    function(err)
+    {
+      console.log("hcpCommitChallenge failed: ", err);
+    });
+}
+
+
+/**
+ * Request PrivateChallenge to Holochain
+ */
+function hcpCommitPrivateChallenge(challengeeHash)
+{
+  // Check pre-conditions
+  if (!challengeeHash || challengeeHash === undefined)
+  {
+    alert("pick a player first!");
+    return Promise.reject(null);
+  }
+  // Create Holochain Entry
+  const challengeEntry = {
+    timestamp           : new Date().valueOf(),
+    challengee          : challengeeHash,
+    challengerPlaysWhite: true,                  // FIXME: hardcoded
+    isGamePublic        : false
   };
   // Create Promise
-  return hcpJson("commitChallenge", JSON.stringify(challengeEntry));
+  return hcpJson("requestPrivateChallenge", JSON.stringify(challengeEntry)).then(
+    function(hashObj)
+    {
+      let challengeHash = hashObj.privateChallengeHash;
+      // console.log("hcpCommitPrivateChallenge: " + challengeHash);
+      challengeEntry.challenger = g_myHash;
+      g_myGames[challengeHash] = challengeEntry;
+      // console.log("g_myGames[" + challengeHash + "] = " + JSON.stringify(g_myGames[challengeHash]));
+      g_myGames[challengeHash].isPrivate = true;
+
+      let challengeResponse = new Object();
+      challengeResponse.Entry = challengeEntry;
+      challengeResponse.Hash = challengeHash;
+      return challenge2Game(challengeResponse).then(
+        function()
+        {
+          // console.log("hcpCommitPrivateChallenge: challenge2Game done");
+          return challengeHash;
+        }
+      );
+    }).catch(
+    function(err)
+    {
+      console.log("hcpCommitPrivateChallenge failed: ", err);
+    });
 }
 
 
 /**
  * Submit Move Entry to Holochain
  */
-function hcpCommitMove(challengeHash, sanMove, index)
+function hcpCommitMove(challengeHash, sanMove, index, isPrivate)
 {
   // Check pre-conditions
   if (   !challengeHash || challengeHash === undefined
@@ -292,7 +394,7 @@ function hcpCommitMove(challengeHash, sanMove, index)
     index         : index
   };
   // Create Promise
-  return hcp("commitMove", JSON.stringify(moveEntry));
+  return hcp(isPrivate? "commitPrivateMove" : "commitMove", JSON.stringify(moveEntry));
 }
 
 

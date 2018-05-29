@@ -12,6 +12,10 @@ body {
 
 /* BUTTONS */
 
+#private-challenge-button {
+    margin-top:3px;
+}
+
 .btn-primary {
   color: #fff;
   background-color: #b73f33;
@@ -43,7 +47,7 @@ body {
 }
 
 input[type="button"]:disabled {
-  opacity: 0.65; 
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
@@ -91,7 +95,7 @@ table.table {
 }
 
 
-#turn-status, 
+#turn-status,
 #board-status {
   font-size: 20px;
   margin: 20px;
@@ -140,7 +144,7 @@ table.table {
   font-weight:bold;
 }
 
-#log {  
+#log {
   overflow: auto;
-  max-height: 300px; 
+  max-height: 300px;
 }

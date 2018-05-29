@@ -161,12 +161,18 @@
         {
           "Name": "getMoves",
           "Comment": "Get all Moves of a Challenge",
-          "CallingType": "json",
+          "CallingType": "string",
           "Exposure":"public"
         },
         {
           "Name": "getPrivateChallengeFenState",
           "Comment": "Get current state of a Private Challenge in FEN",
+          "CallingType": "string",
+          "Exposure":"public"
+        },
+        {
+          "Name": "getPrivateChallengeMoves",
+          "Comment": "Get all current Moves of a private game",
           "CallingType": "string",
           "Exposure":"public"
         }

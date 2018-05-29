@@ -48,22 +48,40 @@
       "Zome"    : "Holochess",
       "FnName"  : "getMyPrivateGames",
       "Input"   : "",
-      "Output"  : ["%h0%"],
+      "Output"  : [{
+        "Entry": {
+          "challengee":"%key%",
+          "challenger":"%challenger_key%",
+          "challengerPlaysWhite":true,
+          "isGamePublic":false,
+          "timestamp":123456},
+        "Hash":"QmeptpfKXY5ZjPELoZM84HADgyeQFMsKSpeLW2tFEuNLAk"
+      }],
       "Exposure": "public",
       "Regexp"  : ""
     },
     {
-      "Convey"  : "5. Wait for challenger's first move",
-      "Time"    : 15000,
+    "Convey"  : "5. Wait for challenger's first move",
+    "Time"    : 15000,
+    "Zome"    : "Holochess",
+    "FnName"  : "getPrivateChallengeFenState",
+    "Input"   : "%h0%",
+    "Output"  : "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+    "Exposure": "public",
+    "Regexp"  : ""
+  },
+    {
+      "Convey"  : "6. Get Private Challenge Moves",
+      "Time"    : 15500,
       "Zome"    : "Holochess",
-      "FnName"  : "getPrivateChallengeFenState",
+      "FnName"  : "getPrivateChallengeMoves",
       "Input"   : "%h0%",
-      "Output"  : "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+      "Output"  : "e4",
       "Exposure": "public",
       "Regexp"  : ""
     },
     {
-      "Convey"  : "6. Play bad 2nd half-move: bad index",
+      "Convey"  : "7. Play bad 2nd half-move: bad index",
       "Time"    : 16000,
       "Zome"    : "Holochess",
       "FnName"  : "commitPrivateMove",
@@ -76,7 +94,7 @@
       "Regexp" : "Validation Failed"
     },
     {
-      "Convey"  : "7. Play bad 2nd half-move: invalid move",
+      "Convey"  : "8. Play bad 2nd half-move: invalid move",
       "Time"    : 17000,
       "Zome"    : "Holochess",
       "FnName"  : "commitPrivateMove",
@@ -89,7 +107,7 @@
       "Regexp" : "Validation Failed"
     },
     {
-      "Convey"  : "8. Play valid 2nd half-move",
+      "Convey"  : "9. Play valid 2nd half-move",
       "Time"    : 18000,
       "Zome"    : "Holochess",
       "FnName"  : "commitPrivateMove",

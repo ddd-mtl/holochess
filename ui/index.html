@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">  
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
   <title>Holochess - P2P chess game</title>
 
-  <link rel="stylesheet" type="text/css" href="dep/bootstrap-3.3.7-dist/css/bootstrap.min.css">  
+  <link rel="stylesheet" type="text/css" href="dep/bootstrap-3.3.7-dist/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="dep/chessboardjs/src/chessboard.css" />
   <link rel="stylesheet" type="text/css" href="holochess.css" />
 </head>
@@ -16,7 +16,7 @@
   <!-- One Row Bootstrap Grid -->
   <div class="container">
     <div id="body-row" class="row">
-            
+
       <!-- Players panel -->
       <div class="col-md-2 players">
         <!-- <div class="input-prepend input-append">
@@ -26,7 +26,7 @@
         </div> -->
         <div class="panel panel-default">
           <div class="panel-heading">
-              <h3 class = "panel-title">Players <span id="my-handle"></span></h3>            
+              <h3 class = "panel-title">Players <span id="my-handle"></span></h3>
             <div class="header-buttons">
                 <!-- <button id="get-handles-button" type="button" class="btn btn-primary">Get Players</button> -->
               </div>
@@ -35,9 +35,10 @@
             <ul id="players">
             </ul>
           </div>
-          <div class="panel-footer">            
-            <div class="row footer-buttons">        
+          <div class="panel-footer">
+            <div class="row footer-buttons">
               <button id="challenge-button" type="button" class="btn btn-primary">Challenge Player!</button>
+              <button id="private-challenge-button" type="button" class="btn btn-primary">Challenge Privately!</button>
             </div>
           </div>
         </div>
@@ -47,65 +48,65 @@
       <div class="col-md-4">
         <div class="panel panel-default">
           <div id="my-games-header" class="panel-heading">
-              <h3 class = "panel-title">My Games</h3> 
+              <h3 class = "panel-title">My Games</h3>
             <div class="header-buttons">
                 <!-- <button id="get-games-button" type="button" class="btn btn-primary">Get my games</button>           -->
-              </div> 
-            </div>                        
-          <div class="panel-body">                 
+              </div>
+            </div>
+          <div class="panel-body">
             <ul id="my-games">
             </ul>
           </div>
-          <div class="panel-footer">            
+          <div class="panel-footer">
             <div class="row footer-buttons">
                 <button type="button" id="sandbox-button" class="btn">Sandbox</button>
-                <button type="button" id="reset-button" class="btn">Clear</button>             
+                <button type="button" id="reset-button" class="btn">Clear</button>
                 <!-- <button id="load-game-button" type="button" class="btn btn-primary">Load game</button>               -->
             </div>
-          </div>                        
+          </div>
         </div>
-      </div> 
-              
-      <!-- Game panel --> 
+      </div>
+
+      <!-- Game panel -->
       <div class="col-md-6">
-        <div class="row panel panel-default">  
+        <div class="row panel panel-default">
           <div class="panel-heading">
             <h3 class = "panel-title"><span id="active-game"></span></h3>
             <div class="row header-buttons">
-              <!-- No buttons --> 
+              <!-- No buttons -->
             </div>
-          </div>   
+          </div>
           <div class="panel-body">
-            <!-- Board -->      
-            <div class="col-md-6">      
+            <!-- Board -->
+            <div class="col-md-6">
                 <div id="myBoard"></div>
                 <p id="turn-status"><span id="turn-color"></span></p>
                 <p><span id="board-status"></span></p>
                 <!-- <p>Opponent: <span id="playerid"></span></p>   -->
-              </div>            
+              </div>
             <!-- Move log -->
-            <div class="col-md-6" id="log">   
+            <div class="col-md-6" id="log">
               <table id="logtable" class="table table-bordered"></table>
             </div>
           </div>
-          <div class="panel-footer">    
-            <div class="row footer-buttons">        
+          <div class="panel-footer">
+            <div class="row footer-buttons">
               <button type="button" id="undo-button" class="btn">Undo</button>
               <button type="button" id="submit-button" class="btn btn-primary">Submit</button>
-            </div> 
-          </div>          
+            </div>
+          </div>
         </div>
-      </div> 
+      </div>
 
     </div>
-  </div>  
- 
+  </div>
+
 
   <!-- Scripts -->
   <script type="application/javascript" src="dep/jquery-3.3.1.js"></script>
   <script type="application/javascript" src="dep/chessboardjs/src/chessboard.js"></script>
   <script type="application/javascript" src="dep/chess.min.js"></script>
   <script type="application/javascript" src="holo-bridge.js"></script>
-  <script type="application/javascript" src="holochess.js"></script>  
+  <script type="application/javascript" src="holochess.js"></script>
 </body>
 </html>
