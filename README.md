@@ -39,11 +39,11 @@ You will get a response like
 Now start up Holochess in each folder.
 ```
   cd holochess1
-  hcdev -no-nat-upnp -port=6001 -agentID=alex -mdns=true -bootstrapServer=localhost:3142 web 3141
+  hcdev -DHTport=6001 -agentID=alex -mdns=true -bootstrapServer=localhost:3142 web 3141
 
   cd ..
   cd holochess2
-  hcdev -no-nat-upnp -port=6002 -agentID=billy -mdns=true -bootstrapServer=localhost:3142 web 4141
+  hcdev -DHTport=6002 -agentID=billy -mdns=true -bootstrapServer=localhost:3142 web 4141
 ```
 You will see a response like:
 ```
@@ -60,8 +60,6 @@ Each instance should see the other agent's name in the *Players* list.
 You now have 2 instances of Holochess that can interact.
 Challenge an opponent to create a game and submit your move to start a P2P chess game!
 
-I'm making a chess game with holochain. You can check it out on github, it actually works! On my machine at least ;)  https://github.com/ddd-mtl/holochess My programmer brain couldn't come up with a better name :/
-
 
 ## Feature Roadmap
  - [x] Set default handle from AgentID string
@@ -69,8 +67,8 @@ I'm making a chess game with holochain. You can check it out on github, it actua
  - [x] View all my games
  - [x] Play a public chess game
  - [x] Chess Move validation on Zome
+ - [x] Play a private chess game
  - [ ] Enable users to change their handle
- - [ ] Play a private chess game
  - [ ] Filter my games by status (finished, pending challenge, active, etc)
  - [ ] Search and view any public game
  - [ ] Game scrubbing & playback

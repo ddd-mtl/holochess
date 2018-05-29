@@ -1,5 +1,7 @@
 # Holochess Architecture
 
+:warning: **DOCUMENTATION OUT OF DATE** :warning:
+
 ## DNA
 
 <img src="holochessZome.png" />
@@ -30,7 +32,6 @@
 
 ## Order of events
 
-:warning: **DOCUMENTATION OUT OF DATE** :warning:
 
 1. Challenge an Opponent
 
@@ -70,5 +71,5 @@ Unit tests available
 ### Scenarios
 
  - challengeOneMove : Tests first moves of a two player public game.
- - PrivateChallenge : Tests first moves of a two player *private* game
+ - privateChallenge : Tests first moves of a two player *private* game
  - threePlayers     : Tests multiple challenges at the same time with 3 different players
