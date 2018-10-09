@@ -13,7 +13,7 @@
   },
   "Zomes": [
     {
-      "Name": "Holochess",
+      "Name": "holochess",
       "Description": "Main Holochess zome",
       "Config":{"ErrorHandling":"returnErrorValue"},
       "CodeFile": "holochessZome.js",
